@@ -1,0 +1,557 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+            "http://www.w3.org/TR/REC-html40/loose.dtd">
+<HTML>
+<HEAD>
+<TITLE>Annotation File Format Specification
+</TITLE>
+
+<META http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<META name="GENERATOR" content="hevea 1.10">
+<STYLE type="text/css">
+.li-itemize{margin:1ex 0ex;}
+.li-enumerate{margin:1ex 0ex;}
+.dd-description{margin:0ex 0ex 1ex 4ex;}
+.dt-description{margin:0ex;}
+.toc{list-style:none;}
+.thefootnotes{text-align:left;margin:0ex;}
+.dt-thefootnotes{margin:0em;}
+.dd-thefootnotes{margin:0em 0em 0em 2em;}
+.footnoterule{margin:1em auto 1em 0px;width:50%;}
+.caption{padding-left:2ex; padding-right:2ex; margin-left:auto; margin-right:auto}
+.title{margin:2ex auto;text-align:center}
+.center{text-align:center;margin-left:auto;margin-right:auto;}
+.flushleft{text-align:left;margin-left:0ex;margin-right:auto;}
+.flushright{text-align:right;margin-left:auto;margin-right:0ex;}
+DIV TABLE{margin-left:inherit;margin-right:inherit;}
+PRE{text-align:left;margin-left:0ex;margin-right:auto;}
+BLOCKQUOTE{margin-left:4ex;margin-right:4ex;text-align:left;}
+TD P{margin:0px;}
+.boxed{border:1px solid black}
+.textboxed{border:1px solid black}
+.vbar{border:none;width:2px;background-color:black;}
+.hbar{border:none;height:2px;width:100%;background-color:black;}
+.hfill{border:none;height:1px;width:200%;background-color:black;}
+.vdisplay{border-collapse:separate;border-spacing:2px;width:auto; empty-cells:show; border:2px solid red;}
+.vdcell{white-space:nowrap;padding:0px;width:auto; border:2px solid green;}
+.display{border-collapse:separate;border-spacing:2px;width:auto; border:none;}
+.dcell{white-space:nowrap;padding:0px;width:auto; border:none;}
+.dcenter{margin:0ex auto;}
+.vdcenter{border:solid #FF8000 2px; margin:0ex auto;}
+.minipage{text-align:left; margin-left:0em; margin-right:auto;}
+.marginpar{border:solid thin black; width:20%; text-align:left;}
+.marginparleft{float:left; margin-left:0ex; margin-right:1ex;}
+.marginparright{float:right; margin-left:1ex; margin-right:0ex;}
+.theorem{text-align:left;margin:1ex auto 1ex 0ex;}
+.part{margin:2ex auto;text-align:center}
+</STYLE>
+</HEAD>
+<BODY >
+<!--HEVEA command line is: hevea -fix -exec xxdate.exe urlhref.hva annotation-file-format.tex -->
+<!--CUT DEF section 1 --><TABLE CLASS="title"><TR><TD><H1 CLASS="titlemain">Annotation File Format Specification</H1><H3 CLASS="titlerest"><A HREF="http://types.cs.washington.edu/annotation-file-utilities/"><TT>http://types.cs.washington.edu/annotation-file-utilities/</TT></A><BR>
+September&#XA0;11, 2012</H3></TD></TR>
+</TABLE><!--TOC section Contents-->
+<H2 CLASS="section"><!--SEC ANCHOR -->Contents</H2><!--SEC END --><UL CLASS="toc"><LI CLASS="li-toc">
+<A HREF="#htoc1">1&#XA0;&#XA0;Purpose: External storage of annotations</A>
+</LI><LI CLASS="li-toc"><A HREF="#htoc2">2&#XA0;&#XA0;Grammar</A>
+<UL CLASS="toc"><LI CLASS="li-toc">
+<A HREF="#htoc3">2.1&#XA0;&#XA0;Grammar conventions</A>
+</LI><LI CLASS="li-toc"><A HREF="#htoc4">2.2&#XA0;&#XA0;Annotation file</A>
+</LI><LI CLASS="li-toc"><A HREF="#htoc5">2.3&#XA0;&#XA0;Package definitions</A>
+</LI><LI CLASS="li-toc"><A HREF="#htoc6">2.4&#XA0;&#XA0;Annotation definitions</A>
+</LI><LI CLASS="li-toc"><A HREF="#htoc7">2.5&#XA0;&#XA0;Class definitions</A>
+</LI><LI CLASS="li-toc"><A HREF="#htoc8">2.6&#XA0;&#XA0;Dependence on bytecode offsets</A>
+</LI><LI CLASS="li-toc"><A HREF="#htoc9">2.7&#XA0;&#XA0;Support for source code indexes</A>
+</LI></UL>
+</LI><LI CLASS="li-toc"><A HREF="#htoc10">3&#XA0;&#XA0;Example</A>
+</LI><LI CLASS="li-toc"><A HREF="#htoc11">4&#XA0;&#XA0;Types and values</A>
+</LI><LI CLASS="li-toc"><A HREF="#htoc12">5&#XA0;&#XA0;Alternative formats</A>
+</LI></UL><!--TOC section Purpose: External storage of annotations-->
+<H2 CLASS="section"><!--SEC ANCHOR --><A NAME="htoc1">1</A>&#XA0;&#XA0;Purpose: External storage of annotations<A NAME="purpose"></A></H2><!--SEC END --><P>Java annotations are meta-data about Java program elements, as in
+&#X201C;<TT>@Deprecated class Date { ... }</TT>&#X201D;.
+Ordinarily, Java annotations are written in the source code of a
+<TT>.java</TT> Java source file. When <TT>javac</TT> compiles the source code,
+it inserts the annotations in the resulting <TT>.class</TT> file (as
+&#X201C;attributes&#X201D;).</P><P>Sometimes, it is convenient to specify the annotations outside the source
+code or the <TT>.class</TT> file.
+</P><UL CLASS="itemize"><LI CLASS="li-itemize">
+When source code is not available, a textual file provides a format for
+writing and storing annotations that is much easier to read and modify
+than a <TT>.class</TT> file. Even if the eventual purpose is to insert the
+annotations in the <TT>.class</TT> file, the annotations must be specified
+in some textual format first.
+</LI><LI CLASS="li-itemize">Even when source code is available, sometimes it should not be changed,
+yet annotations must be stored somewhere for use by tools.
+</LI><LI CLASS="li-itemize">A textual file for annotations can eliminate code clutter. A developer
+performing some specialized task (such as code verification,
+parallelization, etc.) can store annotations in an annotation file without
+changing the main version of the source code. (The developer&#X2019;s private
+version of the code could contain the annotations, but the developer
+could copy them to the separate file before committing changes.)
+</LI><LI CLASS="li-itemize">Tool writers may find it more convenient to use a textual file, rather
+than writing a Java or <TT>.class</TT> file parser.
+</LI><LI CLASS="li-itemize">When debugging annotation-processing tools, a textual file format
+(extracted from the Java or <TT>.class</TT> files) is easier to read, and
+is easier for use in testing.
+</LI></UL><P>All of these uses require an external, textual file format for Java annotations.
+The external file format should be easy for people to create, read, and
+modify.
+An &#X201C;annotation file&#X201D; serves this purpose by specifying a set of
+Java annotations.
+The Annotation File Utilities
+(<A HREF="http://types.cs.washington.edu/annotation-file-utilities/"><TT>http://types.cs.washington.edu/annotation-file-utilities/</TT></A>) are a set
+of tools that process annotation files.</P><P>The file format discussed in this document supports both standard Java SE 6
+annotations and also the extended annotations proposed in JSR 308&#XA0;[<A HREF="#JSR308">Ern08</A>].
+Section &#X201C;Class File Format Extensions&#X201D; of the JSR 308 design document
+explains how the extended annotations are stored in the <TT>.class</TT>
+file. The
+annotation file closely follows the class file format.
+In that sense, the current design is extremely low-level, and users
+probably would not want to write the files by hand (but might fill in a
+template that a tool generated automatically). As future work, we should
+design a more
+user-friendly format that permits Java signatures to be directly specified.
+Furthermore, since the current design is closely aligned to the class file,
+it is convenient for tools that operate on <TT>.class</TT> files but less
+convenient for tools that operate on <TT>.java</TT> files.
+For the short term, the low-level format will serve our purpose, which is
+primarily to enable testing by the Javari developers.</P><P>By convention, an annotation file ends with &#X201C;<TT>.jaif</TT>&#X201D; (for &#X201C;Java
+annotation index file&#X201D;), but this is not required.</P><!--TOC section Grammar-->
+<H2 CLASS="section"><!--SEC ANCHOR --><A NAME="htoc2">2</A>&#XA0;&#XA0;Grammar<A NAME="grammar"></A></H2><!--SEC END --><!--TOC subsection Grammar conventions-->
+<H3 CLASS="subsection"><!--SEC ANCHOR --><A NAME="htoc3">2.1</A>&#XA0;&#XA0;Grammar conventions<A NAME="grammar-conventions"></A></H3><!--SEC END --><P>Throughout this document, &#X201C;name&#X201D; is any valid Java simple name or 
+binary name, &#X201C;type&#X201D; is any valid type, and &#X201C;value&#X201D; is any
+valid Java constant, and quoted strings are literal values.
+The Kleene qualifiers &#X201C;*&#X201D; (zero or more), &#X201C;?&#X201D; (zero or one), and &#X201C;+&#X201D;
+(one or more) denote plurality of a grammar element.
+A vertical bar (&#X201C;|&#X201D;) separates alternatives.
+Parentheses (&#X201C;()&#X201D;) denote grouping, and square brackets (&#X201C;[]&#X201D;)
+denote optional syntax, which is equivalent to &#X201C;( ... ) ?&#X201D; but more concise.
+We use the hash/pound/octothorpe symbol (&#X201C;#&#X201D;) for comments within the grammar. </P><P>In the annotation file,
+besides its use as token separator, 
+whitespace (excluding
+newlines) is optional with one exception: no space is permitted
+between an &#X201C;@&#X201D; character and a subsequent name. Indentation is
+ignored, but is encouraged to maintain readability of the hierarchy of
+program elements in the class (see the example in Section&#XA0;<A HREF="#example">3</A>).</P><P>Comments can be written throughout the annotation file using the double-slash
+syntax employed by Java for single-line comments: anything following
+two adjacent slashes (&#X201C;//&#X201D;) until the first newline is a comment.
+This is omitted from the grammar for simplicity.
+Block comments (&#X201C;/* ... */&#X201D;) are not allowed.</P><P>The line end symbol &#X201C;<B>\n</B>&#X201D; is used for all the different line end
+conventions, that is, Windows- and Unix-style new lines are supported.</P><!--TOC subsection Annotation file-->
+<H3 CLASS="subsection"><!--SEC ANCHOR --><A NAME="htoc4">2.2</A>&#XA0;&#XA0;Annotation file<A NAME="annotation-file"></A></H3><!--SEC END --><P>The annotation file itself contains one or more
+package definitions; each package definition describes one or more
+annotations and classes in that package.</P><TABLE border=0 cellspacing=0 cellpadding=0><TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>annotation-file</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>package-definition</EM></FONT>+
+</TD></TR>
+</TABLE><P>The annotation file may omit certain program elements &#X2014; for instance, it
+may mention only some of the packages in your program, or only some of the
+classes in a package, or only some of the fields or methods of a class.
+Program elements that do not appear in the annotation file are treated as
+unannotated.</P><!--TOC subsection Package definitions-->
+<H3 CLASS="subsection"><!--SEC ANCHOR --><A NAME="htoc5">2.3</A>&#XA0;&#XA0;Package definitions<A NAME="package-definitions"></A></H3><!--SEC END --><P>Package definitions describe a package containing a list of annotation
+definitions and classes. A package definition also contains any
+annotations on the package itself (such as those from a
+<TT>package-info.java</TT> file).</P><TABLE border=0 cellspacing=0 cellpadding=0><TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>package-definition</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# To specify the default package, omit the name.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# Annotations on the default package are not allowed.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>package</B>&#X201D; [ <FONT COLOR=purple><EM>name</EM></FONT>? &#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* ] &#X201C;<B>\n</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;( <FONT COLOR=purple><EM>annotation-definition</EM></FONT> | <FONT COLOR=purple><EM>class-definition</EM></FONT> ) *
+</TD></TR>
+</TABLE><!--TOC subsection Annotation definitions-->
+<H3 CLASS="subsection"><!--SEC ANCHOR --><A NAME="htoc6">2.4</A>&#XA0;&#XA0;Annotation definitions<A NAME="annotation-definitions"></A></H3><!--SEC END --><P>An annotation definition describes the annotation&#X2019;s fields and their
+types, so that they may be referenced in a compact way throughout the
+annotation file.</P><P>The Annotation File Utilities can read annotation definitions from the
+classpath, so it is optional to define them in the annotation file.</P><P>If an annotation is defined in the annotation file, then it must be defined
+before it is used.
+(This requirement makes it impossible to define, in an
+annotation file, an annotation that is meta-annotated with itself.)
+In the annotation file, the annotation definition appears within the
+package that defines the annotation. The annotation may be applied to
+elements of any package.</P><TABLE border=0 cellspacing=0 cellpadding=0><TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>annotation-definition</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>annotation</B>&#X201D; &#X201C;<B>@</B>&#X201D;<FONT COLOR=purple><EM>name</EM></FONT>
+&#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>annotation-field-definition</EM></FONT>*</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>annotation-field-definition</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>type</EM></FONT> <FONT COLOR=purple><EM>name</EM></FONT> &#X201C;<B>\n</B>&#X201D;</TD></TR>
+</TABLE><!--TOC subsection Class definitions-->
+<H3 CLASS="subsection"><!--SEC ANCHOR --><A NAME="htoc7">2.5</A>&#XA0;&#XA0;Class definitions<A NAME="class-definitions"></A></H3><!--SEC END --><P>Class definitions describe the annotations present on the various
+program elements. It is organized according to the hierarchy of fields
+and methods in the class.
+Class definitions
+are defined by the <TT>class-definition</TT> production of the following grammar.
+Note that we use <TT>class-definition</TT> also for interfaces, enums, and
+annotation types; for syntactic simplicity, we use &#X201C;<B>class</B>&#X201D; for
+all such definitions.
+</P><P>Inner classes are treated as ordinary classes whose names happen to contain
+<TT>$</TT> signs and must be defined at the top level of a class definition file.
+(To change this, the grammar would have to be extended with a closing
+delimiter for classes; otherwise, it would be ambiguous whether a
+field/method appearing after an inner class definition belonged to the
+inner class or the outer class.)</P><TABLE border=0 cellspacing=0 cellpadding=0><TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>annotation</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The name may be the annotation&#X2019;s simple name, unless the file</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# contains definitions for two annotations with the same simple name.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# In this case, the binary name of the annotation name is required</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# (like the fully-qualified name, but with $ for inner classes)s.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>@</B>&#X201D;<FONT COLOR=purple><EM>name</EM></FONT> [ &#X201C;<B>(</B>&#X201D; <FONT COLOR=purple><EM>annotation-field</EM></FONT> [ &#X201C;<B>,</B>&#X201D; <FONT COLOR=purple><EM>annotation-field</EM></FONT> ]+ &#X201C;<B>)</B>&#X201D; ]</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>annotation-field</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# In Java, if a single-field annotation has a field named</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# &#X201C;<TT>value</TT>&#X201D;, then that field name may be elided in uses
+of the</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# annotation: &#X201C;<TT>@A(12)</TT>&#X201D; rather than &#X201C;<TT>@A(value=12)</TT>&#X201D;.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The same convention holds in an annotation file.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>name</EM></FONT> &#X201C;<B>=</B>&#X201D; <FONT COLOR=purple><EM>value</EM></FONT></TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>class-definition</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>class</B>&#X201D; <FONT COLOR=purple><EM>name</EM></FONT> &#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>typeparam-definition</EM></FONT>*</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>bound-definition</EM></FONT>*</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>extends-definition</EM></FONT>*</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>implements-definition</EM></FONT>*</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>field-definition</EM></FONT>*</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>method-definition</EM></FONT>*</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>extends-definition</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# Only type annotations are allowed.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>extends</B>&#X201D; &#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>type-argument-or-array-definition</EM></FONT>*</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>implements-definition</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# Only type annotations are allowed.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The integer is the zero-based index of the implemented interface.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>implements</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> &#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>type-argument-or-array-definition</EM></FONT>*</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>field-definition</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The annotation on the &#X201C;<B>field</B>&#X201D; line is that of the field declaration,</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# while the annotation on the &#X201C;<B>type</B>&#X201D; line is that of outermost type.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>field</B>&#X201D; <FONT COLOR=purple><EM>name</EM></FONT> &#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>type-annotations</EM></FONT>*</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>method-definition</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The method-key consists of the name followed by the signature</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# in JVML format, for example: &#X201C;<TT>foo([ILjava/lang/String;)V</TT>&#X201D;.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# Note that the signature is the erased signature of the method and does not</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# contain generic type information, but does contain the return type.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;Using <TT>javap -s</TT> makes it easy to find the signature.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# &#X201C;<TT>&lt;init&gt;</TT>&#X201D; and &#X201C;<TT>&lt;clinit&gt;</TT>&#X201D; are used to name instance and class initialization methods.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The annotation on the &#X201C;<B>method</B>&#X201D; line is that on the method, not on the return value.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>method</B>&#X201D; <FONT COLOR=purple><EM>method-key</EM></FONT> &#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>typeparam-definition</EM></FONT>*</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>bound-definition</EM></FONT>*</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>return-definition</EM></FONT>?</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>receiver-definition</EM></FONT>?</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>parameter-definition</EM></FONT>*</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>variable-definition</EM></FONT>*</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>typecast-definition</EM></FONT>*</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>instanceof-definition</EM></FONT>*</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>new-definition</EM></FONT>*</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>type-annotations</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# holds the type annotations, as opposed to the declaration annotations</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>type:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>type-argument-or-array-definition</EM></FONT>*</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>type-argument-or-array-definition</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The integer list here contains the values of the &#X201C;<A HREF="http://types.cs.washington.edu/jsr308/specification/java-annotation-design.html#class-file:ext:ri:typearg">location</A>&#X201D; array&#XA0;[<A HREF="#JSR308">Ern08</A>].</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>inner-type</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> [ &#X201C;<B>,</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> ]+ &#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>typeparam-definition</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The integer is the zero-based type parameter index.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>typeparam</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> &#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>bound-definition</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The integers are respectively the parameter and bound indices of</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# the type parameter bound&#XA0;[<A HREF="#JSR308">Ern08</A>].</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>bound</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> &#X201C;<B>&amp;</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> &#X201C;<B>:</B>&#X201D;
+<FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>type-argument-or-array-definition</EM></FONT>*</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>return-definition</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>return:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>type-argument-or-array-definition</EM></FONT>*</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>receiver-definition</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>receiver:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>parameter-definition</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The integer is the index of the formal parameter in the method</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# (i.e., 0 is the first formal parameter).</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The annotation on the &#X201C;<B>parameter</B>&#X201D; line is that of the formal parameter declaration,</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# while the annotation on the &#X201C;<B>type</B>&#X201D; line is that of the outermost type of the parameter.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>parameter</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> &#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>type-annotations</EM></FONT>*</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>variable-definition</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The integers are respectively the index, start, and length</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# fields of the annotations on this variable&#XA0;[<A HREF="#JSR308">Ern08</A>].</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The annotation on the &#X201C;<B>local</B>&#X201D; line is that of the variable declaration,</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# while the annotation on the &#X201C;<B>type</B>&#X201D; line is that of the outermost type of the variable.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>local</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> &#X201C;<B>#</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> &#X201C;<B>+</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> &#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>type-annotations</EM></FONT>*</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>typecast-definition</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The integer is the offset field of the annotation&#XA0;[<A HREF="#JSR308">Ern08</A>].</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>typecast</B>&#X201D; <FONT COLOR=purple><EM>loc</EM></FONT>&#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>type-argument-or-array-definition</EM></FONT>*</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>instanceof-definition</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The integer is the offset field of the annotation&#XA0;[<A HREF="#JSR308">Ern08</A>].</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>instanceof</B>&#X201D; <FONT COLOR=purple><EM>loc</EM></FONT>&#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>type-argument-or-array-definition</EM></FONT>*</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>new-definition</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The integer is the offset field of the annotation&#XA0;[<A HREF="#JSR308">Ern08</A>].</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>new</B>&#X201D; <FONT COLOR=purple><EM>loc</EM></FONT>&#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>type-argument-or-array-definition</EM></FONT>*</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>loc</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# &#X201C;# integer&#X201D; is a bytecode offset, and &#X201C;* integer&#X201D; indicates which occurrence in the source.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>#</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> | &#X201C;<B>*</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT>
+</TD></TR>
+</TABLE><!--TOC subsection Dependence on bytecode offsets-->
+<H3 CLASS="subsection"><!--SEC ANCHOR --><A NAME="htoc8">2.6</A>&#XA0;&#XA0;Dependence on bytecode offsets<A NAME="bytecode-offsets"></A></H3><!--SEC END --><P>For annotations on expressions (typecasts, instanceof, new, etc.), the
+annotation file uses offsets into the bytecode array of the class file to
+indicate the specific expression to which the annotation refers. Because
+different compilation strategies yield different <TT>.class</TT> files, a
+tool that maps such annotations from an annotation file into source code must
+have access to the specific <TT>.class</TT> file that was used to generate
+the annotation file. For non-expression annotations such as those on methods,
+fields, classes, etc., the <TT>.class</TT> file is not necessary.</P><!--TOC subsection Support for source code indexes-->
+<H3 CLASS="subsection"><!--SEC ANCHOR --><A NAME="htoc9">2.7</A>&#XA0;&#XA0;Support for source code indexes<A NAME="source-code-index"></A></H3><!--SEC END --><P>For some tools it is easier to generate the index into the source code
+instead of the bytecode offset.
+As an experimental feature we support the following additional
+elements:</P><TABLE border=0 cellspacing=0 cellpadding=0><TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>source-variable-definition</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The <FONT COLOR=purple><EM>name</EM></FONT> is the identifier of the local variable.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The <FONT COLOR=purple><EM>integer</EM></FONT> is the optional zero-based index of the</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# intended local variable within all local variables with the given
+<FONT COLOR=purple><EM>name</EM></FONT>.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The default value for the index is zero.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The annotation on the &#X201C;<B>local</B>&#X201D; line is that of the variable declaration,</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# while the annotation on the &#X201C;<B>type</B>&#X201D; line is that of the outermost type of the variable.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>local</B>&#X201D; <FONT COLOR=purple><EM>name</EM></FONT> [&#X201C;<B>*</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT>] &#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>type-annotations</EM></FONT>*</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>source-typecast-definition</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The integer is the zero-based index of the
+typecast within the method.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>typecast</B>&#X201D; &#X201C;<B>*</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> &#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>type-argument-or-array-definition</EM></FONT>*</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>source-instanceof-definition</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The integer is the zero-based index of the
+instanceof within the method.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>instanceof</B>&#X201D; &#X201C;<B>*</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> &#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>type-argument-or-array-definition</EM></FONT>*</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>source-new-definition</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The integer is the zero-based index of the
+object or array creation within the method.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>new</B>&#X201D; &#X201C;<B>*</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> &#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>type-argument-or-array-definition</EM></FONT>*
+</TD></TR>
+</TABLE><P>We use the star literal &#X201C;<B>*</B>&#X201D; to distinguish source indexes from
+the bytecode offsets that are introduced using &#X201C;<B>#</B>&#X201D;.</P><!--TOC section Example-->
+<H2 CLASS="section"><!--SEC ANCHOR --><A NAME="htoc10">3</A>&#XA0;&#XA0;Example<A NAME="example"></A></H2><!--SEC END --><P>Consider the code of Figure&#XA0;<A HREF="#fig:java-example">1</A>.
+Figure&#XA0;<A HREF="#fig:annotation-file-examples">2</A> shows two legal annotation files
+each of which represents its annotations.</P><BLOCKQUOTE CLASS="figure"><DIV CLASS="center"><HR WIDTH="80%" SIZE=2></DIV>
+<PRE CLASS="verbatim">package p1;
+
+import p2.*; // for the annotations @A through @D
+import java.util.*;
+
+public @A(12) class Foo {
+
+    public int bar;             // no annotation
+    private @B List&lt;@C String&gt; baz;
+
+    public Foo(@D("spam") Foo this, @B List&lt;@C String&gt; a) {
+        @B List&lt;@C String&gt; l = new LinkedList&lt;@C String&gt;();
+        l = (@B List&lt;@C String&gt;)l;
+    }
+}
+</PRE><DIV CLASS="caption"><TABLE CELLSPACING=6 CELLPADDING=0><TR><TD VALIGN=top ALIGN=left>Figure 1: Example Java code with annotations.</TD></TR>
+</TABLE></DIV>
+<A NAME="fig:java-example"></A>
+<DIV CLASS="center"><HR WIDTH="80%" SIZE=2></DIV></BLOCKQUOTE><BLOCKQUOTE CLASS="figure"><DIV CLASS="center"><HR WIDTH="80%" SIZE=2></DIV>
+<TABLE BORDER=1 CELLSPACING=0 CELLPADDING=1><TR><TD ALIGN=center NOWRAP><DIV CLASS="minipage">
+<PRE CLASS="verbatim">package p2:
+annotation @A:
+    int value
+annotation @B:
+annotation @C:
+annotation @D:
+    String value
+
+package p1:
+class Foo: @A(value=12)
+
+    field bar:
+
+    field baz: @B
+        inner-type 0: @C
+
+    method &lt;init&gt;(
+      Ljava/util/List;)V:
+        parameter 0: @B
+            inner-type 0: @C
+        receiver: @D(value="spam")
+        local 1 #3+5: @B
+            inner-type 0: @C
+        typecast #7: @B
+            inner-type 0: @C
+        new #0:
+            inner-type 0: @C
+</PRE></DIV></TD><TD ALIGN=center NOWRAP><DIV CLASS="minipage">
+<PRE CLASS="verbatim">package p2:
+annotation @A
+    int value
+
+package p2:
+annotation @B
+
+package p2:
+annotation @C
+
+package p2:
+annotation @D
+    String value
+
+package p1:
+class Foo: @A(value=12)
+
+package p1:
+class Foo:
+    field baz: @B
+
+package p1:
+class Foo:
+    field baz:
+        inner-type 0: @C
+
+// ... definitions for p1.Foo.&lt;init&gt;
+// omitted for brevity
+</PRE></DIV></TD></TR>
+</TABLE><DIV CLASS="caption"><TABLE CELLSPACING=6 CELLPADDING=0><TR><TD VALIGN=top ALIGN=left>Figure 2: Two distinct annotation files each corresponding to the code of
+Figure&#XA0;<A HREF="#fig:java-example">1</A>.</TD></TR>
+</TABLE></DIV><P>
+<A NAME="fig:annotation-file-examples"></A>
+</P><DIV CLASS="center"><HR WIDTH="80%" SIZE=2></DIV></BLOCKQUOTE><!--TOC section Types and values-->
+<H2 CLASS="section"><!--SEC ANCHOR --><A NAME="htoc11">4</A>&#XA0;&#XA0;Types and values<A NAME="types-and-values"></A></H2><!--SEC END --><P>The Java language permits several types for annotation fields: primitives,
+<TT>String</TT>s, <TT>java.lang.Class</TT> tokens (possibly parameterized),
+enumeration constants, annotations, and one-dimensional arrays of these.</P><P>These <B>types</B> are represented in an annotation file as follows:
+</P><UL CLASS="itemize"><LI CLASS="li-itemize">
+Primitive: the name of the primitive type, such as <TT>boolean</TT>.
+</LI><LI CLASS="li-itemize">String: <TT>String</TT>.
+</LI><LI CLASS="li-itemize">Class token: <TT>Class</TT>; the parameterization, if any, is not
+represented in annotation files.
+</LI><LI CLASS="li-itemize">Enumeration constant: <TT>enum</TT> followed by the binary name of
+the enumeration class, such as <TT>enum java.lang.Thread$State</TT>.
+</LI><LI CLASS="li-itemize">Annotation: <TT>@</TT> followed by the binary name of the annotation type.
+</LI><LI CLASS="li-itemize">Array: The representation of the element type followed by <TT>[]</TT>, such
+as <TT>String[]</TT>, with one exception: an annotation definition may specify
+a field type as <TT>unknown[]</TT> if, in all occurrences of that annotation in
+the annotation file, the field value is a zero-length array.<SUP><A NAME="text1" HREF="#note1">1</A></SUP>
+</LI></UL><P>Annotation field <B>values</B> are represented in an annotation file as follows:
+</P><UL CLASS="itemize"><LI CLASS="li-itemize">
+Numeric primitive value: literals as they would appear in Java source
+code.
+</LI><LI CLASS="li-itemize">Boolean: <TT>true</TT> or <TT>false</TT>.
+</LI><LI CLASS="li-itemize">Character: A single character or escape sequence in single quotes, such
+as <TT>&#X2019;A&#X2019;</TT> or <TT>&#X2019;\&#X2019;&#X2019;</TT>.
+</LI><LI CLASS="li-itemize">String: A string literal as it would appear in source code, such as
+<TT>"\"Yields falsehood when quined\" yields falsehood when quined."</TT>.
+</LI><LI CLASS="li-itemize">Class token: The binary name of the class (using <TT>$</TT> for
+inner classes) or the name of the primitive type or <TT>void</TT>, possibly
+followed by <TT>[]</TT>s representing array layers, followed by <TT>.class</TT>.
+Examples: <TT>java.lang.Integer[].class</TT>, <TT>java.util.Map$Entry.class</TT>,
+and <TT>int.class</TT>.
+</LI><LI CLASS="li-itemize">Enumeration constant: the name of the enumeration constant, such as
+<TT>RUNNABLE</TT>.
+</LI><LI CLASS="li-itemize">Array: a sequence of elements inside <TT>{}</TT> with a comma
+between each pair of adjacent elements; a comma following the last element is
+optional as in Java. Also as in Java, the braces may be omitted if the
+array has only one element.
+Examples: <TT>{1}</TT>, <TT>1</TT>,
+<TT>{true, false,}</TT> and <TT>{}</TT>.
+</LI></UL><P>The following example annotation file shows how types and values are represented.</P><PRE CLASS="verbatim">package p1:
+
+annotation @ClassInfo:
+    String remark
+    Class favoriteClass
+    Class favoriteCollection // it's probably Class&lt;? extends Collection&gt;
+                             // in source, but no parameterization here
+    char favoriteLetter
+    boolean isBuggy
+    enum p1.DebugCategory[] defaultDebugCategories
+    @p1.CommitInfo lastCommit
+
+annotation @CommitInfo:
+    byte[] hashCode
+    int unixTime
+    String author
+    String message
+
+class Foo: @p1.ClassInfo(
+    remark="Anything named \"Foo\" is bound to be good!",
+    favoriteClass=java.lang.reflect.Proxy.class,
+    favoriteCollection=java.util.LinkedHashSet.class,
+    favoriteLetter='F',
+    isBuggy=true,
+    defaultDebugCategories={DEBUG_TRAVERSAL, DEBUG_STORES, DEBUG_IO},
+    lastCommit=@p1.CommitInfo(
+        hashCode={31, 41, 59, 26, 53, 58, 97, 92, 32, 38, 46, 26, 43, 38, 32, 79},
+        unixTime=1152109350,
+        author="Joe Programmer",
+        message="First implementation of Foo"
+    )
+)
+</PRE><!--TOC section Alternative formats-->
+<H2 CLASS="section"><!--SEC ANCHOR --><A NAME="htoc12">5</A>&#XA0;&#XA0;Alternative formats<A NAME="alternative-formats"></A></H2><!--SEC END --><P>We mention two alternatives to the format described in this document.
+Each of them has its own merits.
+In the future, the other formats could be implemented, along with tools for
+converting among them.
+</P><P>An alternative to the format described in this document would be XML. 
+XML does not seem to provide any compelling advantages. Programmers
+interact with annotation files in two ways: textually (when reading, writing,
+and editing annotation files) and programmatically (when writing
+annotation-processing tools). Textually, XML can be
+very hard to read; style sheets mitigate this
+problem, but editing XML files remains tedious and error-prone.
+Programmatically, a layer of abstraction (an API) is needed in any event, so it
+makes little difference what the underlying textual representation is.
+XML files are easier to parse, but the parsing code only needs to be
+written once and is abstracted away by an API to the data structure.</P><P>Another alternative is a format like the <TT>.spec</TT>/<TT>.jml</TT> files
+of JML&#XA0;[<A HREF="#LeavensBR2006:JML">LBR06</A>]. The format is similar to Java code, but
+all method bodies are empty, and users can annotate the public members of a
+class. This is easy for Java programmers to read and understand. (It is a
+bit more complex to implement, but that is not particularly germane.)
+Because it does not permit complete specification of a class&#X2019;s annotations
+(it does not permit annotation of method bodies), it is not appropriate for
+certain tools, such as type inference tools. However, it might be desirable
+to adopt such a format for public members, and to use the format
+described in this document primarily for method bodies.</P><!--TOC section References-->
+<H2 CLASS="section"><!--SEC ANCHOR -->References</H2><!--SEC END --><DL CLASS="thebibliography"><DT CLASS="dt-thebibliography">
+<A NAME="JSR308"><FONT COLOR=purple>[Ern08]</FONT></A></DT><DD CLASS="dd-thebibliography">
+Michael&#XA0;D. Ernst.
+Type Annotations specification (JSR 308).
+<A HREF="http://types.cs.washington.edu/jsr308/"><TT>http://types.cs.washington.edu/jsr308/</TT></A>, September&#XA0;12, 2008.</DD><DT CLASS="dt-thebibliography"><A NAME="LeavensBR2006:JML"><FONT COLOR=purple>[LBR06]</FONT></A></DT><DD CLASS="dd-thebibliography">
+Gary&#XA0;T. Leavens, Albert&#XA0;L. Baker, and Clyde Ruby.
+Preliminary design of JML: A behavioral interface specification
+language for Java.
+<EM>ACM SIGSOFT Software Engineering Notes</EM>, 31(3), March 2006.</DD></DL><!--BEGIN NOTES document-->
+<HR CLASS="footnoterule"><DL CLASS="thefootnotes"><DT CLASS="dt-thefootnotes">
+<A NAME="note1" HREF="#text1">1</A></DT><DD CLASS="dd-thefootnotes">There is a design flaw in the format of array field values in a
+class file. An array does not itself specify an element type; instead, each
+element specifies its type. If the annotation type <TT>X</TT> has an array field
+<TT>arr</TT> but <TT>arr</TT> is zero-length in every <TT>@X</TT> annotation in the
+class file, there is no way to determine the element type of <TT>arr</TT> from the
+class file. This exception makes it possible to define <TT>X</TT> when the class
+file is converted to an annotation file.
+</DD></DL>
+<!--END NOTES-->
+<!--CUT END -->
+<!--HTMLFOOT-->
+<!--ENDHTML-->
+</BODY>
+</HTML>
