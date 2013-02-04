@@ -1,14 +1,15 @@
 package annotator.find;
 
-import annotator.Main;
-
-import java.util.*;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 import annotations.el.BoundLocation;
 import annotations.el.InnerTypeLocation;
 import annotations.el.LocalLocation;
 import annotations.el.RelativeLocation;
 import annotations.el.TypeIndexLocation;
+import annotations.io.ASTPath;
+import annotator.Main;
 
 import com.sun.source.tree.Tree;
 import com.sun.source.util.TreePath;
@@ -59,12 +60,12 @@ public final class Criteria {
     assert path == null || path.getLeaf() == leaf;
     for (Criterion c : criteria) {
       if (! c.isSatisfiedBy(path, leaf)) {
-    	if (debug) {
+        if (debug) {
           System.out.printf("UNsatisfied criterion:%n    %s%n    %s%n", c, Main.pathToString(path));
-    	}
+        }
         return false;
       } else if (debug) {
-    	System.out.printf("satisfied criterion:%n    %s%n    %s%n", c, Main.pathToString(path));
+        System.out.printf("satisfied criterion:%n    %s%n    %s%n", c, Main.pathToString(path));
       }
     }
     return true;
@@ -86,7 +87,7 @@ public final class Criteria {
         }
         return false;
       } else if (debug) {
-    	System.out.println("satisfied criterion: " + c);
+        System.out.println("satisfied criterion: " + c);
       }
     }
     return true;
@@ -148,6 +149,21 @@ public final class Criteria {
         }
       }
     }
+    return false;
+  }
+
+  /**
+   * Determines whether this is the criteria on an AST path.
+   *
+   * @return true iff this is the criteria on an AST path.
+   */
+  public boolean isASTPath() {
+    for (Criterion c : criteria) {
+      if (c.getKind() == Criterion.Kind.AST_PATH) {
+        return true;
+      }
+    }
+
     return false;
   }
 
@@ -304,7 +320,7 @@ public final class Criteria {
   }
 
   public final static Criterion field(String varName) {
-	return new FieldCriterion(varName);
+    return new FieldCriterion(varName);
   }
 
   public final static Criterion inStaticInit(int blockID) {
@@ -369,4 +385,7 @@ public final class Criteria {
     return new ClassBoundCriterion(className, boundLoc);
   }
 
+  public final static Criterion astPath(ASTPath astPath) {
+    return new ASTPathCriterion(astPath);
+  }
 }

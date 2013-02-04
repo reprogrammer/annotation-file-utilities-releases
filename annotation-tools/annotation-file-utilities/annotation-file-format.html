@@ -48,7 +48,7 @@ TD P{margin:0px;}
 <BODY >
 <!--HEVEA command line is: hevea -fix -exec xxdate.exe urlhref.hva annotation-file-format.tex -->
 <!--CUT DEF section 1 --><TABLE CLASS="title"><TR><TD><H1 CLASS="titlemain">Annotation File Format Specification</H1><H3 CLASS="titlerest"><A HREF="http://types.cs.washington.edu/annotation-file-utilities/"><TT>http://types.cs.washington.edu/annotation-file-utilities/</TT></A><BR>
-September&#XA0;11, 2012</H3></TD></TR>
+February&#XA0;1, 2013</H3></TD></TR>
 </TABLE><!--TOC section Contents-->
 <H2 CLASS="section"><!--SEC ANCHOR -->Contents</H2><!--SEC END --><UL CLASS="toc"><LI CLASS="li-toc">
 <A HREF="#htoc1">1&#XA0;&#XA0;Purpose: External storage of annotations</A>
@@ -60,7 +60,7 @@ September&#XA0;11, 2012</H3></TD></TR>
 </LI><LI CLASS="li-toc"><A HREF="#htoc6">2.4&#XA0;&#XA0;Annotation definitions</A>
 </LI><LI CLASS="li-toc"><A HREF="#htoc7">2.5&#XA0;&#XA0;Class definitions</A>
 </LI><LI CLASS="li-toc"><A HREF="#htoc8">2.6&#XA0;&#XA0;Dependence on bytecode offsets</A>
-</LI><LI CLASS="li-toc"><A HREF="#htoc9">2.7&#XA0;&#XA0;Support for source code indexes</A>
+</LI><LI CLASS="li-toc"><A HREF="#htoc9">2.7&#XA0;&#XA0;Source code locations</A>
 </LI></UL>
 </LI><LI CLASS="li-toc"><A HREF="#htoc10">3&#XA0;&#XA0;Example</A>
 </LI><LI CLASS="li-toc"><A HREF="#htoc11">4&#XA0;&#XA0;Types and values</A>
@@ -225,8 +225,13 @@ of the</TD></TR>
 <TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>field-definition</EM></FONT> ::=</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The annotation on the &#X201C;<B>field</B>&#X201D; line is that of the field declaration,</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# while the annotation on the &#X201C;<B>type</B>&#X201D; line is that of outermost type.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# <FONT COLOR=purple><EM>source-insert-typecast-definition</EM></FONT> is described in Section&#XA0;<A HREF="#ast-paths">2.7.2</A>.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# Casts can only be inserted on a field if the field is initialized at declaration.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# Otherwise, if the field is assigned in a method the cast can be inserted within a</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# <FONT COLOR=purple><EM>method-definition</EM></FONT> rule.</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>field</B>&#X201D; <FONT COLOR=purple><EM>name</EM></FONT> &#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>type-annotations</EM></FONT>*</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>source-insert-typecast-definition</EM></FONT>*</TD></TR>
 <TR><TD ALIGN=left NOWRAP></TD></TR>
 <TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>method-definition</EM></FONT> ::=</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The method-key consists of the name followed by the signature</TD></TR>
@@ -236,6 +241,7 @@ of the</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;Using <TT>javap -s</TT> makes it easy to find the signature.</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# &#X201C;<TT>&lt;init&gt;</TT>&#X201D; and &#X201C;<TT>&lt;clinit&gt;</TT>&#X201D; are used to name instance and class initialization methods.</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The annotation on the &#X201C;<B>method</B>&#X201D; line is that on the method, not on the return value.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The <FONT COLOR=purple><EM>source-*-definition</EM></FONT> rules are described in Section&#XA0;<A HREF="#additional-locations">2.7</A>.</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>method</B>&#X201D; <FONT COLOR=purple><EM>method-key</EM></FONT> &#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>typeparam-definition</EM></FONT>*</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>bound-definition</EM></FONT>*</TD></TR>
@@ -246,6 +252,11 @@ of the</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>typecast-definition</EM></FONT>*</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>instanceof-definition</EM></FONT>*</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>new-definition</EM></FONT>*</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>source-variable-definition</EM></FONT>*</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>source-typecast-definition</EM></FONT>*</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>source-instanceof-definition</EM></FONT>*</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>source-new-definition</EM></FONT>*</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>source-insert-typecast-definition</EM></FONT>*</TD></TR>
 <TR><TD ALIGN=left NOWRAP></TD></TR>
 <TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>type-annotations</EM></FONT> ::=</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# holds the type annotations, as opposed to the declaration annotations</TD></TR>
@@ -253,8 +264,8 @@ of the</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>type-argument-or-array-definition</EM></FONT>*</TD></TR>
 <TR><TD ALIGN=left NOWRAP></TD></TR>
 <TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>type-argument-or-array-definition</EM></FONT> ::=</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The integer list here contains the values of the &#X201C;<A HREF="http://types.cs.washington.edu/jsr308/specification/java-annotation-design.html#class-file:ext:ri:typearg">location</A>&#X201D; array&#XA0;[<A HREF="#JSR308">Ern08</A>].</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>inner-type</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> [ &#X201C;<B>,</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> ]+ &#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The integer list here contains the values of the &#X201C;<A HREF="http://types.cs.washington.edu/jsr308/specification/java-annotation-design.html#sec32">type_path</A>&#X201D; structure&#XA0;[<A HREF="#JSR308">Ern08</A>].</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>inner-type</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> &#X201C;<B>,</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> [ &#X201C;<B>,</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> &#X201C;<B>,</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> ]* &#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
 <TR><TD ALIGN=left NOWRAP></TD></TR>
 <TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>typeparam-definition</EM></FONT> ::=</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The integer is the zero-based type parameter index.</TD></TR>
@@ -276,7 +287,8 @@ of the</TD></TR>
 <TR><TD ALIGN=left NOWRAP></TD></TR>
 <TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>parameter-definition</EM></FONT> ::=</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The integer is the index of the formal parameter in the method</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# (i.e., 0 is the first formal parameter).</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# (i.e., 0 is the first formal parameter. The receiver parameter is not index 0.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# Use <FONT COLOR=purple><EM>receiver-definition</EM></FONT> to annotate the receiver parameter.)</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The annotation on the &#X201C;<B>parameter</B>&#X201D; line is that of the formal parameter declaration,</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# while the annotation on the &#X201C;<B>type</B>&#X201D; line is that of the outermost type of the parameter.</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>parameter</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> &#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
@@ -287,28 +299,31 @@ of the</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# fields of the annotations on this variable&#XA0;[<A HREF="#JSR308">Ern08</A>].</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The annotation on the &#X201C;<B>local</B>&#X201D; line is that of the variable declaration,</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# while the annotation on the &#X201C;<B>type</B>&#X201D; line is that of the outermost type of the variable.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# A source code index can be used instead. See <FONT COLOR=purple><EM>source-variable-definition</EM></FONT> in Section&#XA0;<A HREF="#source-code-index">2.7.1</A>.</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>local</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> &#X201C;<B>#</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> &#X201C;<B>+</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> &#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>type-annotations</EM></FONT>*</TD></TR>
 <TR><TD ALIGN=left NOWRAP></TD></TR>
 <TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>typecast-definition</EM></FONT> ::=</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The integer is the offset field of the annotation&#XA0;[<A HREF="#JSR308">Ern08</A>].</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>typecast</B>&#X201D; <FONT COLOR=purple><EM>loc</EM></FONT>&#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The first integer is the offset field and the optional second integer</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# is the type index of an intersection type&#XA0;[<A HREF="#JSR308">Ern08</A>].</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The type index defaults to zero if not specified.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# A source code index can be used instead. See <FONT COLOR=purple><EM>source-typecast-definition</EM></FONT> in Section&#XA0;<A HREF="#source-code-index">2.7.1</A>.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>typecast</B>&#X201D; &#X201C;<B>#</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT>
+[ &#X201C;<B>,</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> ] &#X201C;<B>:</B>&#X201D;
+<FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>type-argument-or-array-definition</EM></FONT>*</TD></TR>
 <TR><TD ALIGN=left NOWRAP></TD></TR>
 <TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>instanceof-definition</EM></FONT> ::=</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The integer is the offset field of the annotation&#XA0;[<A HREF="#JSR308">Ern08</A>].</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>instanceof</B>&#X201D; <FONT COLOR=purple><EM>loc</EM></FONT>&#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# A source code index can be used instead. See <FONT COLOR=purple><EM>source-instanceof-definition</EM></FONT> in Section&#XA0;<A HREF="#source-code-index">2.7.1</A>.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>instanceof</B>&#X201D; &#X201C;<B>#</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> &#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>type-argument-or-array-definition</EM></FONT>*</TD></TR>
 <TR><TD ALIGN=left NOWRAP></TD></TR>
 <TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>new-definition</EM></FONT> ::=</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The integer is the offset field of the annotation&#XA0;[<A HREF="#JSR308">Ern08</A>].</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>new</B>&#X201D; <FONT COLOR=purple><EM>loc</EM></FONT>&#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# A source code index can be used instead. See <FONT COLOR=purple><EM>source-new-definition</EM></FONT> in Section&#XA0;<A HREF="#source-code-index">2.7.1</A>.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>new</B>&#X201D; &#X201C;<B>#</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> &#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>type-argument-or-array-definition</EM></FONT>*</TD></TR>
-<TR><TD ALIGN=left NOWRAP></TD></TR>
-<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>loc</EM></FONT> ::=</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# &#X201C;# integer&#X201D; is a bytecode offset, and &#X201C;* integer&#X201D; indicates which occurrence in the source.</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>#</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> | &#X201C;<B>*</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT>
-</TD></TR>
 </TABLE><!--TOC subsection Dependence on bytecode offsets-->
 <H3 CLASS="subsection"><!--SEC ANCHOR --><A NAME="htoc8">2.6</A>&#XA0;&#XA0;Dependence on bytecode offsets<A NAME="bytecode-offsets"></A></H3><!--SEC END --><P>For annotations on expressions (typecasts, instanceof, new, etc.), the
 annotation file uses offsets into the bytecode array of the class file to
@@ -317,8 +332,18 @@ different compilation strategies yield different <TT>.class</TT> files, a
 tool that maps such annotations from an annotation file into source code must
 have access to the specific <TT>.class</TT> file that was used to generate
 the annotation file. For non-expression annotations such as those on methods,
-fields, classes, etc., the <TT>.class</TT> file is not necessary.</P><!--TOC subsection Support for source code indexes-->
-<H3 CLASS="subsection"><!--SEC ANCHOR --><A NAME="htoc9">2.7</A>&#XA0;&#XA0;Support for source code indexes<A NAME="source-code-index"></A></H3><!--SEC END --><P>For some tools it is easier to generate the index into the source code
+fields, classes, etc., the <TT>.class</TT> file is not necessary.</P><!--TOC subsection Source code locations-->
+<H3 CLASS="subsection"><!--SEC ANCHOR --><A NAME="htoc9">2.7</A>&#XA0;&#XA0;Source code locations<A NAME="additional-locations"></A></H3><!--SEC END --><P>The Annotation File Utilities supports two additional methods to specify a
+location: source code indexes and AST paths. Unfortunately, these methods only
+allow insertion of annotations in source code, not <TT>.class</TT> files.
+Therefore, in order to insert annotations in both <TT>.class</TT> files and source
+code, locations must be redundantly specified as bytecode offsets and source
+code locations. This can be done in a single <TT>.jaif</TT> file or two seperate
+<TT>.jaif</TT> files. However, since bytecode offsets and source code locations
+are not used to add annotations to signatures, it is not necessary to include
+redundant information to insert annotations on signatures in both <TT>.class</TT>
+files and source code.</P><P>Source code indexes and AST paths are described below.</P><!--TOC subsubsection Source code indexes-->
+<H4 CLASS="subsubsection"><!--SEC ANCHOR -->2.7.1&#XA0;&#XA0;Source code indexes<A NAME="source-code-index"></A></H4><!--SEC END --><P>For some tools it is easier to generate the index into the source code
 instead of the bytecode offset.
 As an experimental feature we support the following additional
 elements:</P><TABLE border=0 cellspacing=0 cellpadding=0><TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>source-variable-definition</EM></FONT> ::=</TD></TR>
@@ -333,9 +358,12 @@ elements:</P><TABLE border=0 cellspacing=0 cellpadding=0><TR><TD ALIGN=left NOWR
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>type-annotations</EM></FONT>*</TD></TR>
 <TR><TD ALIGN=left NOWRAP></TD></TR>
 <TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>source-typecast-definition</EM></FONT> ::=</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The integer is the zero-based index of the
-typecast within the method.</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>typecast</B>&#X201D; &#X201C;<B>*</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> &#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The first integer is the zero-based index of the
+typecast within the method and</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# the optional second integer is the type index of an intersection type&#XA0;[<A HREF="#JSR308">Ern08</A>].</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The type index defaults to zero if not specified.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# A source code index can be used instead. See <FONT COLOR=purple><EM>source-typecast-definition</EM></FONT> in Section&#XA0;<A HREF="#source-code-index">2.7.1</A>.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>typecast</B>&#X201D; &#X201C;<B>*</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> [ &#X201C;<B>,</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> ] &#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>type-argument-or-array-definition</EM></FONT>*</TD></TR>
 <TR><TD ALIGN=left NOWRAP></TD></TR>
 <TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>source-instanceof-definition</EM></FONT> ::=</TD></TR>
@@ -351,7 +379,256 @@ object or array creation within the method.</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>type-argument-or-array-definition</EM></FONT>*
 </TD></TR>
 </TABLE><P>We use the star literal &#X201C;<B>*</B>&#X201D; to distinguish source indexes from
-the bytecode offsets that are introduced using &#X201C;<B>#</B>&#X201D;.</P><!--TOC section Example-->
+the bytecode offsets that are introduced using &#X201C;<B>#</B>&#X201D;.</P><!--TOC subsubsection AST paths-->
+<H4 CLASS="subsubsection"><!--SEC ANCHOR -->2.7.2&#XA0;&#XA0;AST paths<A NAME="ast-paths"></A></H4><!--SEC END --><P>The Annotation File Utilities supports using a path through the AST (abstract
+syntax tree) to specify an arbitrary expression in source code to modify.
+Currently, AST paths can only be used to specify a location to insert a cast.</P><TABLE border=0 cellspacing=0 cellpadding=0><TR><TD ALIGN=left NOWRAP>
+<FONT COLOR=purple><EM>source-insert-typecast-definition</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# <FONT COLOR=purple><EM>ast-path</EM></FONT> is described below.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# <FONT COLOR=purple><EM>type</EM></FONT> is the un-annotated type to cast to.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>insert-typecast</B>&#X201D; <FONT COLOR=purple><EM>ast-path</EM></FONT>&#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* <FONT COLOR=purple><EM>type</EM></FONT> &#X201C;<B>\n</B>&#X201D;</TD></TR>
+</TABLE><P>An AST path represents a traversal through the AST nodes. AST paths are
+restricted for use in <FONT COLOR=purple><EM>field-definition</EM></FONT>s and <FONT COLOR=purple><EM>method-definition</EM></FONT>s.
+An AST path starts with the first element under the definition type. For
+methods this is <TT>Block</TT> and for fields this is <TT>Variable</TT>.</P><P>An AST path is composed of one or more AST entries, separated by commas. Each
+AST entry is composed of a tree kind, a child selector, and an optional
+argument. An example AST entry is:</P><PRE CLASS="verbatim">Block.statement 1
+</PRE><P>The tree kind is <TT>Block</TT>, the child selector is <TT>statement</TT> and the
+argument is <TT>1</TT>.</P><P>The available tree kinds correspond to the Java AST tree nodes (from the package
+<TT>com.sun.source.tree</TT>), but with &#X201C;Tree&#X201D; removed from the name. For
+example, the class <TT>com.sun.source.tree.BlockTree</TT> is represented as
+<TT>Block</TT>. The child selectors correspond to the method names of the given
+Java AST tree node, with &#X201C;get&#X201D; removed from the beginning of the method name
+and the first letter lowercased. In cases where the child selector method
+returns a list, the method name is made singular and the AST entry also contains
+an argument to select the index of the list to take. For example, the method
+<TT>com.sun.source.tree.BlockTree.getStatements()</TT> is represented as
+<TT>Block.statement</TT> and requires an argument to select the statement to take.</P><P>The following is an example of an entire AST path:</P><PRE CLASS="verbatim">Block.statement 1, Switch.case 1, Case.statement 0, ExpressionStatement.expression,
+    MethodInvocation.argument 0
+</PRE><P>Since the above example starts with a <TT>Block</TT> it belongs in a
+<FONT COLOR=purple><EM>method-definition</EM></FONT>. This AST path would select an expression that is in
+statement 1 of the method, case 1 of the switch statement, statement 0 of the
+case, and argument 0 of a method call (<TT>ExpressionStatement</TT> is just a
+wrapper around an expression that can also be a statement).</P><P>The following is an example of an annotation file with AST paths used to specify
+where to insert casts.</P><PRE CLASS="verbatim">package p:
+annotation @A:
+
+class ASTPathExample:
+
+field a:
+    insert-typecast Variable.initializer, Binary.rightOperand: @A Integer
+
+method m()V:
+    insert-typecast Block.statement 0, Variable.initializer: @A Integer
+    insert-typecast Block.statement 1, Switch.case 1, Case.statement 0,
+        ExpressionStatement.expression, MethodInvocation.argument 0: @A Integer
+</PRE><P>And the matching source code:</P><PRE CLASS="verbatim">package p;
+
+public class ASTPathExample {
+
+    private int a = 12 + 13;
+
+    public void m() {
+        int x = 1;
+        switch (x + 2) {
+            case 1:
+                System.out.println(1);
+                break;
+            case 2:
+                System.out.println(2 + x);
+                break;
+            default:
+                System.out.println(-1);
+        }
+    }
+}
+</PRE><P>The following is the ouput, with the casts inserted.</P><PRE CLASS="verbatim">package p;
+import p.A;
+
+public class ASTPathExample {
+
+    private int a = 12 + ((@A Integer) (13));
+
+    public void m() {
+        int x = ((@A Integer) (1));
+        switch (x + 2) {
+            case 1:
+                System.out.println(1);
+                break;
+            case 2:
+                System.out.println(((@A Integer) (2 + x)));
+                break;
+            default:
+                System.out.println(-1);
+        }
+    }
+}
+</PRE><P>Note that two additional sets of parentheses are always added for each cast
+insertion: one set around the expression to be cast, and the other set around the
+cast and the expression. For example, a cast insertion looks like this:</P><PRE CLASS="verbatim">((\textit{cast type}) (\textit{original expression}))
+</PRE><P>This is to limit the cast to the entire expression, but
+nothing more. These parentheses may be unnecessary and can be removed by the
+programmer afterward. Also note that a cast can be inserted on any expression, not
+just the lowest expression in the AST. For example, a cast could be inserted on
+the expression <TT>i + j</TT>, the identifier <TT>i</TT>, and/or the identifier <TT>j</TT>.</P><P>To help create correct AST paths it may be useful to view the AST of a class.
+The Checker Framework has a processor to do this. The following command will
+output indented AST nodes for the entire input program.</P><PRE CLASS="verbatim">javac -processor checkers.util.debug.TreeDebug ASTPathExample.java
+</PRE><P>The following is the grammar for AST paths.</P><TABLE border=0 cellspacing=0 cellpadding=0><TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>ast-path</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>ast-entry</EM></FONT> [ &#X201C;<B>,</B>&#X201D; <FONT COLOR=purple><EM>ast-entry</EM></FONT> ]+</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>ast-entry</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>annotated-type</EM></FONT></TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>array-access</EM></FONT></TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>array-type</EM></FONT></TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>assert</EM></FONT></TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>assignment</EM></FONT></TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>binary</EM></FONT></TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>block</EM></FONT></TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>case</EM></FONT></TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>catch</EM></FONT></TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>compound-assignment</EM></FONT></TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>conditional-expression</EM></FONT></TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>do-while-loop</EM></FONT></TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>enhanced-for-loop</EM></FONT></TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>expression-statement</EM></FONT></TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>for-loop</EM></FONT></TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>if</EM></FONT></TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>instance-of</EM></FONT></TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>labeled-statement</EM></FONT></TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>lambda-expression</EM></FONT></TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>member-reference</EM></FONT></TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>member-select</EM></FONT></TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>method-invocation</EM></FONT></TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>new-array</EM></FONT></TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>new-class</EM></FONT></TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>parameterized-type</EM></FONT></TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>parenthesized</EM></FONT></TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>return</EM></FONT></TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>switch</EM></FONT></TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>synchronized</EM></FONT></TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>throw</EM></FONT></TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>try</EM></FONT></TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>type-cast</EM></FONT></TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>unary</EM></FONT></TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>union-type</EM></FONT></TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>variable-type</EM></FONT></TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>while-loop</EM></FONT></TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>wildcard-tree</EM></FONT></TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>annotated-type</EM></FONT> :: =</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>AnnotatedType</B>&#X201D; &#X201C;<B>.</B>&#X201D; ( ( &#X201C;<B>annotation</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> ) | &#X201C;<B>underlyingType</B>&#X201D; )</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>array-access</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>ArrayAccess</B>&#X201D; &#X201C;<B>.</B>&#X201D; ( &#X201C;<B>expression</B>&#X201D; | &#X201C;<B>index</B>&#X201D; )</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>array-type</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>ArrayType</B>&#X201D; &#X201C;<B>.</B>&#X201D; &#X201C;<B>type</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>assert</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>Assert</B>&#X201D; &#X201C;<B>.</B>&#X201D; ( &#X201C;<B>condition</B>&#X201D; | &#X201C;<B>detail</B>&#X201D; )</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>assignment</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>Assignment</B>&#X201D; &#X201C;<B>.</B>&#X201D; ( &#X201C;<B>variable</B>&#X201D; | &#X201C;<B>expression</B>&#X201D; )</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>binary</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>Binary</B>&#X201D; &#X201C;<B>.</B>&#X201D; ( &#X201C;<B>leftOperand</B>&#X201D; | &#X201C;<B>rightOperand</B>&#X201D; )</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>block</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>Block</B>&#X201D; &#X201C;<B>.</B>&#X201D; &#X201C;<B>statement</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT></TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>case</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>Case</B>&#X201D; &#X201C;<B>.</B>&#X201D; ( &#X201C;<B>expression</B>&#X201D; | ( &#X201C;<B>statement</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> ) )</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>catch</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>Catch</B>&#X201D; &#X201C;<B>.</B>&#X201D; ( &#X201C;<B>parameter</B>&#X201D; | &#X201C;<B>block</B>&#X201D; )</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>compound-assignment</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>CompountAssignment</B>&#X201D; &#X201C;<B>.</B>&#X201D; ( &#X201C;<B>variable</B>&#X201D; | &#X201C;<B>expression</B>&#X201D; )</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>conditional-expression</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>ConditionalExpression</B>&#X201D; &#X201C;<B>.</B>&#X201D; ( &#X201C;<B>condition</B>&#X201D; | &#X201C;<B>trueExpression</B>&#X201D; | &#X201C;<B>falseExpression</B>&#X201D; )</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>do-while-loop</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>DoWhileLoop</B>&#X201D; &#X201C;<B>.</B>&#X201D; ( &#X201C;<B>condition</B>&#X201D; | &#X201C;<B>statement</B>&#X201D; )</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>enhanced-for-loop</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>EnhancedForLoop</B>&#X201D; &#X201C;<B>.</B>&#X201D; ( &#X201C;<B>variable</B>&#X201D; | &#X201C;<B>expression</B>&#X201D; | &#X201C;<B>statement</B>&#X201D; )</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>expression-statement</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>ExpressionStatement</B>&#X201D; &#X201C;<B>.</B>&#X201D; &#X201C;<B>expression</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>for-loop</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>ForLoop</B>&#X201D; &#X201C;<B>.</B>&#X201D; ( ( &#X201C;<B>initializer</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> ) | &#X201C;<B>condition</B>&#X201D; | ( &#X201C;<B>update</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> ) | &#X201C;<B>statement</B>&#X201D; )</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>if</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>If</B>&#X201D; &#X201C;<B>.</B>&#X201D; ( &#X201C;<B>condition</B>&#X201D; | &#X201C;<B>thenStatement</B>&#X201D; | &#X201C;<B>elseStatement</B>&#X201D; )</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>instance-of</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>InstanceOf</B>&#X201D; &#X201C;<B>.</B>&#X201D; ( &#X201C;<B>expression</B>&#X201D; | &#X201C;<B>type</B>&#X201D; )</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>labeled-statement</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>LabeledStatement</B>&#X201D; &#X201C;<B>.</B>&#X201D; &#X201C;<B>statement</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>lambda-expression</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>LambdaExpression</B>&#X201D; &#X201C;<B>.</B>&#X201D; ( ( &#X201C;<B>parameter</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> ) | &#X201C;<B>body</B>&#X201D; )</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>member-reference</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>MemberReference</B>&#X201D; &#X201C;<B>.</B>&#X201D; ( &#X201C;<B>qualifierExpression</B>&#X201D; | ( &#X201C;<B>typeArgument</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> ) )</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>member-select</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>MemberSelect</B>&#X201D; &#X201C;<B>.</B>&#X201D; &#X201C;<B>expression</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>method-invocation</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>MethodInvocation</B>&#X201D; &#X201C;<B>.</B>&#X201D; ( ( &#X201C;<B>typeArgument</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> ) | &#X201C;<B>methodSelect</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| ( &#X201C;<B>argument</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> ) )</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>new-array</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>NewArray</B>&#X201D; &#X201C;<B>.</B>&#X201D; ( &#X201C;<B>type</B>&#X201D; | ( &#X201C;<B>dimension</B>&#X201D; | &#X201C;<B>initializer</B>&#X201D; ) <FONT COLOR=purple><EM>integer</EM></FONT> )</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>new-class</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>NewClass</B>&#X201D; &#X201C;<B>.</B>&#X201D; ( &#X201C;<B>enclosingExpression</B>&#X201D; | ( &#X201C;<B>typeArgument</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> ) | &#X201C;<B>identifier</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| ( &#X201C;<B>argument</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> ) | &#X201C;<B>classBody</B>&#X201D; )</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>parameterized-type</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>ParameterizedType</B>&#X201D; &#X201C;<B>.</B>&#X201D; ( &#X201C;<B>type</B>&#X201D; | ( &#X201C;<B>typeArgument</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> ) )</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>parenthesized</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>Parenthesized</B>&#X201D; &#X201C;<B>.</B>&#X201D; &#X201C;<B>expression</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>return</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>Return</B>&#X201D; &#X201C;<B>.</B>&#X201D; &#X201C;<B>expression</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>switch</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>Switch</B>&#X201D; &#X201C;<B>.</B>&#X201D; ( &#X201C;<B>expression</B>&#X201D; | ( &#X201C;<B>case</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> ) )</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>synchronized</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>Synchronized</B>&#X201D; &#X201C;<B>.</B>&#X201D; ( &#X201C;<B>expression</B>&#X201D; | &#X201C;<B>block</B>&#X201D; )</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>throw</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>Throw</B>&#X201D; &#X201C;<B>.</B>&#X201D; &#X201C;<B>expression</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>try</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>Try</B>&#X201D; &#X201C;<B>.</B>&#X201D; ( &#X201C;<B>block</B>&#X201D; | ( &#X201C;<B>catch</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> ) | &#X201C;<B>finallyBlock</B>&#X201D; | ( &#X201C;<B>resource</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> ) )</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>type-cast</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>TypeCast</B>&#X201D; &#X201C;<B>.</B>&#X201D; ( &#X201C;<B>type</B>&#X201D; | &#X201C;<B>expression</B>&#X201D; )</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>unary</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>Unary</B>&#X201D; &#X201C;<B>.</B>&#X201D; &#X201C;<B>expression</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>union-type</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>UnionType</B>&#X201D; &#X201C;<B>.</B>&#X201D; &#X201C;<B>typeAlternative</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT></TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>variable</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>Variable</B>&#X201D; &#X201C;<B>.</B>&#X201D; ( &#X201C;<B>type</B>&#X201D; | &#X201C;<B>initializer</B>&#X201D; )</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>while-loop</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>WhileLoop</B>&#X201D; &#X201C;<B>.</B>&#X201D; ( &#X201C;<B>condition</B>&#X201D; | &#X201C;<B>statement</B>&#X201D; )</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>wildcard</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>Wildcard</B>&#X201D; &#X201C;<B>.</B>&#X201D; &#X201C;<B>bound</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+</TABLE><!--TOC section Example-->
 <H2 CLASS="section"><!--SEC ANCHOR --><A NAME="htoc10">3</A>&#XA0;&#XA0;Example<A NAME="example"></A></H2><!--SEC END --><P>Consider the code of Figure&#XA0;<A HREF="#fig:java-example">1</A>.
 Figure&#XA0;<A HREF="#fig:annotation-file-examples">2</A> shows two legal annotation files
 each of which represents its annotations.</P><BLOCKQUOTE CLASS="figure"><DIV CLASS="center"><HR WIDTH="80%" SIZE=2></DIV>

@@ -3,7 +3,9 @@
 
 package annotations.io.classfile;
 
+/*>>>
 import checkers.nullness.quals.*;
+*/
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,6 +14,7 @@ import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.TypeAnnotationVisitor;
 
 import com.sun.tools.javac.code.TargetType;
+import com.sun.tools.javac.code.TypeAnnotationPosition.TypePathEntry;
 
 /**
  * A <code>SafeTypeAnnotationVisitor</code> wraps around an
@@ -42,16 +45,19 @@ implements TypeAnnotationVisitor {
 
   // Each list keeps a record of what was passed in to the similarly-named
   // method, and except for xLocationArgs, should all contain at most 1 element.
-  private List<Integer> xIndexArgs;
-  private List<Integer> xLengthArgs;
-  private List<Integer> xLocationArgs;
-  private List<Integer> xLocationLengthArgs;
-  private List<Integer> xOffsetArgs;
-  private List<Integer> xStartPcArgs;
-  private List<Integer> xTargetTypeArgs;
-  private List<Integer> xParamIndexArgs;
-  private List<Integer> xBoundIndexArgs;
-  private List<Integer> xTypeIndexArgs;
+  private final List<Integer> xIndexArgs;
+  private final List<Integer> xLengthArgs;
+  private final List<TypePathEntry> xLocationArgs;
+  private final List<Integer> xLocationLengthArgs;
+  private final List<Integer> xOffsetArgs;
+  private final List<Integer> xStartPcArgs;
+  private final List<Integer> xTargetTypeArgs;
+  private final List<Integer> xParamIndexArgs;
+  private final List<Integer> xBoundIndexArgs;
+  private final List<Integer> xTypeIndexArgs;
+
+  // Counts the number of times visitXNameAndArgsSize is called.
+  private int xNameAndArgsCount;
 
   /**
    * Constructs a new <code> SafeTypeAnnotationVisitor </code> that
@@ -65,7 +71,7 @@ implements TypeAnnotationVisitor {
     // they should not contain more than one element.
     xIndexArgs = new ArrayList<Integer>(1);
     xLengthArgs = new ArrayList<Integer>(1);
-    xLocationArgs = new ArrayList<Integer>();
+    xLocationArgs = new ArrayList<TypePathEntry>();
     xLocationLengthArgs = new ArrayList<Integer>(1);
     xOffsetArgs = new ArrayList<Integer>(1);
     xStartPcArgs = new ArrayList<Integer>(1);
@@ -73,12 +79,14 @@ implements TypeAnnotationVisitor {
     xParamIndexArgs = new ArrayList<Integer>(1);
     xBoundIndexArgs = new ArrayList<Integer>(1);
     xTypeIndexArgs = new ArrayList<Integer>(1);
+    xNameAndArgsCount = 0;
   }
 
   /**
    * @inheritDoc
    * @see org.objectweb.asm.AnnotationVisitor#visit(java.lang.String, java.lang.Object)
    */
+  @Override
   public void visit(String name, Object value) {
     xav.visit(name, value);
   }
@@ -87,6 +95,7 @@ implements TypeAnnotationVisitor {
    * @inheritDoc
    * @see org.objectweb.asm.AnnotationVisitor#visitAnnotation(java.lang.String, java.lang.String)
    */
+  @Override
   public AnnotationVisitor visitAnnotation(String name, String desc) {
     return xav.visitAnnotation(name, desc);
   }
@@ -95,6 +104,7 @@ implements TypeAnnotationVisitor {
    * @inheritDoc
    * @see org.objectweb.asm.AnnotationVisitor#visitArray(java.lang.String)
    */
+  @Override
   public AnnotationVisitor visitArray(String name) {
     return xav.visitArray(name);
   }
@@ -103,6 +113,7 @@ implements TypeAnnotationVisitor {
    * @inheritDoc
    * @see org.objectweb.asm.AnnotationVisitor#visitEnum(java.lang.String, java.lang.String, java.lang.String)
    */
+  @Override
   public void visitEnum(String name, String desc, String value) {
     xav.visitEnum(name, desc, value);
   }
@@ -111,6 +122,7 @@ implements TypeAnnotationVisitor {
    * @inheritDoc
    * @see org.objectweb.asm.TypeAnnotationVisitor#visitXIndex(int)
    */
+  @Override
   public void visitXIndex(int index) {
     xIndexArgs.add(index);
     xav.visitXIndex(index);
@@ -120,6 +132,7 @@ implements TypeAnnotationVisitor {
    * @inheritDoc
    * @see org.objectweb.asm.TypeAnnotationVisitor#visitXLength(int)
    */
+  @Override
   public void visitXLength(int length) {
     xLengthArgs.add(length);
     xav.visitXLength(length);
@@ -127,9 +140,10 @@ implements TypeAnnotationVisitor {
 
   /**
    * @inheritDoc
-   * @see org.objectweb.asm.TypeAnnotationVisitor#visitXLocation(int)
+   * @see org.objectweb.asm.TypeAnnotationVisitor#visitXLocation(TypePathEntry)
    */
-  public void visitXLocation(int location) {
+  @Override
+  public void visitXLocation(TypePathEntry location) {
     xLocationArgs.add(location);
     xav.visitXLocation(location);
   }
@@ -138,6 +152,7 @@ implements TypeAnnotationVisitor {
    * @inheritDoc
    * @see org.objectweb.asm.TypeAnnotationVisitor#visitXLocationLength(int)
    */
+  @Override
   public void visitXLocationLength(int location_length) {
     xLocationLengthArgs.add(location_length);
     xav.visitXLocationLength(location_length);
@@ -147,11 +162,13 @@ implements TypeAnnotationVisitor {
    * @inheritDoc
    * @see org.objectweb.asm.TypeAnnotationVisitor#visitXOffset(int)
    */
+  @Override
   public void visitXOffset(int offset) {
     xOffsetArgs.add(offset);
     xav.visitXOffset(offset);
   }
 
+  @Override
   public void visitXNumEntries(int num_entries) {
   }
 
@@ -159,6 +176,7 @@ implements TypeAnnotationVisitor {
    * @inheritDoc
    * @see org.objectweb.asm.TypeAnnotationVisitor#visitXStartPc(int)
    */
+  @Override
   public void visitXStartPc(int start_pc) {
     xStartPcArgs.add(start_pc);
     xav.visitXStartPc(start_pc);
@@ -168,6 +186,7 @@ implements TypeAnnotationVisitor {
    * @inheritDoc
    * @see org.objectweb.asm.TypeAnnotationVisitor#visitXTargetType(int)
    */
+  @Override
   public void visitXTargetType(int target_type) {
     xTargetTypeArgs.add(target_type);
     xav.visitXTargetType(target_type);
@@ -177,6 +196,7 @@ implements TypeAnnotationVisitor {
    * @inheritDoc
    * @see org.objectweb.asm.TypeAnnotationVisitor#visitXParamIndex(int)
    */
+  @Override
   public void visitXParamIndex(int param_index) {
     xParamIndexArgs.add(param_index);
     xav.visitXParamIndex(param_index);
@@ -186,6 +206,7 @@ implements TypeAnnotationVisitor {
    * @inheritDoc
    * @see org.objectweb.asm.TypeAnnotationVisitor#visitXBoundIndex(int)
    */
+  @Override
   public void visitXBoundIndex(int bound_index) {
     if (bound_index != -1) {
       xBoundIndexArgs.add(bound_index);
@@ -193,9 +214,16 @@ implements TypeAnnotationVisitor {
     }
   }
 
+  @Override
   public void visitXTypeIndex(int type_index) {
     xTypeIndexArgs.add(type_index);
     xav.visitXTypeIndex(type_index);
+  }
+
+  @Override
+  public void visitXNameAndArgsSize() {
+    xNameAndArgsCount++;
+    xav.visitXNameAndArgsSize();
   }
 
   /**
@@ -209,6 +237,7 @@ implements TypeAnnotationVisitor {
    *  has visited does not specify a legal extended annotation
    * @see org.objectweb.asm.AnnotationVisitor#visitEnd()
    */
+  @Override
   public void visitEnd() {
     if (xTargetTypeArgs.size() > 0) {
       checkX();
@@ -242,6 +271,12 @@ implements TypeAnnotationVisitor {
       InvalidTypeAnnotationException("More than one target type visited.");
     }
 
+    if (xNameAndArgsCount != 1) {
+      throw new InvalidTypeAnnotationException("Name and args count should "
+          + " be visited 1 time, actually visited " + xNameAndArgsCount
+          + " times.");
+    }
+
     // Since the correct size of xLocationArgs is specified by
     // xLocationLengthArgs, this information must be looked up first.
     int c = 0;
@@ -250,105 +285,60 @@ implements TypeAnnotationVisitor {
     }
 
     switch(TargetType.fromTargetTypeValue(xTargetTypeArgs.get(0))) {
-    case TYPECAST:
-      checkListSize(0, 0, 0, 0, 1, 0, 0, 0, 0,
+    case CAST:
+      checkListSize(0, 0, c, 1, 1, 0, 0, 0, 1,
           "Invalid typecast annotation:");
       break;
-    case TYPECAST_COMPONENT:
-      checkListSize(0, 0, c, 1, 1, 0, 0, 0, 0,
-      "Invalid typecast generic/array annotation:");
-      break;
     case INSTANCEOF:
-      checkListSize(0, 0, 0, 0, 1, 0, 0, 0, 0,
+      checkListSize(0, 0, c, 1, 1, 0, 0, 0, 0,
       "Invalid type test annotation:");
       break;
-    case INSTANCEOF_COMPONENT:
-      checkListSize(0, 0, c, 1, 1, 0, 0, 0, 0,
-      "Invalid type test generic/array annotation:");
-      break;
     case NEW:
-      checkListSize(0, 0, 0, 0, 1, 0, 0, 0, 0,
+      checkListSize(0, 0, c, 1, 1, 0, 0, 0, 0,
       "Invalid object creation annotation:");
       break;
-    case NEW_COMPONENT:
-      checkListSize(0, 0, c, 1, 1, 0, 0, 0, 0,
-      "Invalid object creation generic/array annotation:");
-      break;
     case METHOD_RECEIVER:
-      checkListSize(0, 0, 0, 0, 0, 0, 0, 0, 0,
+      checkListSize(0, 0, c, 1, 0, 0, 0, 0, 0,
       "Invalid method receiver annotation:");
       break;
-    case METHOD_RECEIVER_COMPONENT:
-      // TODO
-      checkListSize(0, 0, 0, 0, 0, 0, 0, 0, 0,
-      "Invalid method receiver generic/array annotation:");
-      break;
     case LOCAL_VARIABLE:
-      checkListSize(1, 1, 0, 0, 0, 1, 0, 0, 0,
+      checkListSize(1, 1, c, 1, 0, 1, 0, 0, 0,
       "Invalid local variable annotation:");
       break;
-    case LOCAL_VARIABLE_COMPONENT:
-      checkListSize(1, 1, c, 1, 0, 1, 0, 0, 0,
-      "Invalid local variable generic/array annotation:");
-      break;
     case METHOD_RETURN:
-      checkListSize(0, 0, 0, 0, 0, 0, 0, 0, 0,
+      checkListSize(0, 0, c, 1, 0, 0, 0, 0, 0,
       "Invalid method return type annotation:");
       break;
-    case METHOD_RETURN_COMPONENT:
-      checkListSize(0, 0, c, 1, 0, 0, 0, 0, 0,
-      "Invalid method return type generic/array annotation:");
-      break;
-    case METHOD_PARAMETER:
-      checkListSize(0, 0, 0, 0, 0, 0, 1, 0, 0,
+    case METHOD_FORMAL_PARAMETER:
+      checkListSize(0, 0, c, 1, 0, 0, 1, 0, 0,
       "Invalid method parameter annotation:");
       break;
-    case METHOD_PARAMETER_COMPONENT:
-      checkListSize(0, 0, c, 1, 0, 0, 1, 0, 0,
-      "Invalid method parameter generic/array annotation:");
-      break;
     case FIELD:
-      checkListSize(0, 0, c, 0, 0, 0, 0, 0, 0,
+      checkListSize(0, 0, c, 1, 0, 0, 0, 0, 0,
       "Invalid field annotation:");
       break;
-    case FIELD_COMPONENT:
-      checkListSize(0, 0, c, 1, 0, 0, 0, 0, 0,
-      "Invalid field generic/array annotation:");
-      break;
     case CLASS_TYPE_PARAMETER:
-      checkListSize(0, 0, 0, 0, 0, 0, 1, 0, 0,
+      checkListSize(0, 0, c, 1, 0, 0, 1, 0, 0,
       "Invalid class type parameter annotation:");
       break;
     case CLASS_TYPE_PARAMETER_BOUND:
-      checkListSize(0, 0, 0, 0, 0, 0, 1, 1, 0,
+      checkListSize(0, 0, c, 1, 0, 0, 1, 1, 0,
       "Invalid class type parameter bound annotation:");
       break;
-    case CLASS_TYPE_PARAMETER_BOUND_COMPONENT:
-      checkListSize(0, 0, c, 1, 0, 0, 1, 1, 0,
-      "Invalid class type parameter bound generic/array annotation:");
-      break;
     case METHOD_TYPE_PARAMETER:
-      checkListSize(0, 0, 0, 0, 0, 0, 1, 0, 0,
+      checkListSize(0, 0, c, 1, 0, 0, 1, 0, 0,
       "Invalid method type parameter annotation:");
       break;
     case METHOD_TYPE_PARAMETER_BOUND:
-      checkListSize(0, 0, 0, 0, 0, 0, 1, 1, 0,
+      checkListSize(0, 0, c, 1, 0, 0, 1, 1, 0,
       "Invalid method type parameter bound annotation:");
       break;
-    case METHOD_TYPE_PARAMETER_BOUND_COMPONENT:
-      checkListSize(0, 0, c, 1, 0, 0, 1, 1, 0,
-      "Invalid method type parameter bound generic/array annotation:");
-      break;
     case CLASS_EXTENDS:
-      checkListSize(0, 0, 0, 0, 0, 0, 0, 0, 1,
+      checkListSize(0, 0, c, 1, 0, 0, 0, 0, 1,
       "Invalid class extends/implements annotation:");
       break;
-    case CLASS_EXTENDS_COMPONENT:
-      checkListSize(0, 0, 0, 0, 0, 0, 0, 0, 1,
-      "Invalid class extends/implements generic/array annotation:");
-      break;
     case THROWS:
-      checkListSize(0, 0, 0, 0, 0, 0, 0, 0, 1,
+      checkListSize(0, 0, c, 1, 0, 0, 0, 0, 1,
       "Invalid exception type in throws annotation:");
       break;
     default:
@@ -368,7 +358,7 @@ implements TypeAnnotationVisitor {
    * @param methodName the name of the method whose arguments went into list
    * @param sb the StringBuilder to append error messages to
    */
-  private void appendMessage(List<Integer> list, int idealLength,
+  private void appendMessage(List<?> list, int idealLength,
       String methodName, StringBuilder sb) {
     if (list.size() != idealLength) {
       sb.append("\nInvalid method calls: ");

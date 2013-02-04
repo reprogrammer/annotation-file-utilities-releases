@@ -5,8 +5,6 @@ import annotator.Main;
 import com.sun.source.tree.*;
 import com.sun.source.util.TreePath;
 
-import javax.tools.JavaFileObject;
-
 /**
  * Represents the criterion that a program element is in a method with a
  * certain name.
@@ -33,9 +31,6 @@ final class PackageCriterion implements Criterion {
     if (Criteria.debug) {
       debug(String.format("PackageCriterion.isSatisfiedBy(%s, %s); this=%s", Main.pathToString(path), tree, this));
     }
-
-    if (path != null)
-      return false;
 
     if (tree.getKind() == Tree.Kind.COMPILATION_UNIT) {
       CompilationUnitTree cu = (CompilationUnitTree)tree;
