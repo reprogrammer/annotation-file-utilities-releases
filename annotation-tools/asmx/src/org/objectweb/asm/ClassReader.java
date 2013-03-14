@@ -992,6 +992,20 @@ public class ClassReader {
                                 w += 4;
                             }
                         }
+                    } else if (attrName.equals("RuntimeInvisibleTypeAnnotations")) {
+                        k = readUnsignedShort(v + 6);
+                        w = v + 8;
+                        for (; k > 0; --k) {
+                            w = readTypeAnnotationValues(w,
+                                    c, mv, false);
+                        }
+                    } else if (attrName.equals("RuntimeVisibleTypeAnnotations")) {
+                        k = readUnsignedShort(v + 6);
+                        w = v + 8;
+                        for (; k > 0; --k) {
+                            w = readTypeAnnotationValues(w,
+                                    c, mv, true);
+                        }
                     } else {
                         for (k = 0; k < attrs.length; ++k) {
                             if (attrs[k].type.equals(attrName)) {
@@ -1343,8 +1357,8 @@ public class ClassReader {
         // } reference_info;
         case INSTANCEOF:
         case NEW:
-        case CONSTRUCTOR_REFERENCE_RECEIVER:
-        case METHOD_REFERENCE_RECEIVER:
+        case CONSTRUCTOR_REFERENCE:
+        case METHOD_REFERENCE:
           offset = readUnsignedShort(v);
           v += 2;
           break;
@@ -1475,7 +1489,7 @@ public class ClassReader {
 
         String desc = readUTF8(v, buf);
         v += 2;
-        TypeAnnotationVisitor xav = mv.visitTypeAnnotation(desc, visible);
+        TypeAnnotationVisitor xav = mv.visitTypeAnnotation(desc, visible, false);
 
         xav.visitXTargetType(target_type_value);
         if (start_pc != null) {
