@@ -48,26 +48,29 @@ TD P{margin:0px;}
 <BODY >
 <!--HEVEA command line is: hevea -fix -exec xxdate.exe urlhref.hva annotation-file-format.tex -->
 <!--CUT DEF section 1 --><TABLE CLASS="title"><TR><TD><H1 CLASS="titlemain">Annotation File Format Specification</H1><H3 CLASS="titlerest"><A HREF="http://types.cs.washington.edu/annotation-file-utilities/"><TT>http://types.cs.washington.edu/annotation-file-utilities/</TT></A><BR>
-March&#XA0;1, 2013</H3></TD></TR>
+April&#XA0;5, 2013</H3></TD></TR>
 </TABLE><!--TOC section Contents-->
 <H2 CLASS="section"><!--SEC ANCHOR -->Contents</H2><!--SEC END --><UL CLASS="toc"><LI CLASS="li-toc">
 <A HREF="#htoc1">1&#XA0;&#XA0;Purpose: External storage of annotations</A>
 </LI><LI CLASS="li-toc"><A HREF="#htoc2">2&#XA0;&#XA0;Grammar</A>
 <UL CLASS="toc"><LI CLASS="li-toc">
 <A HREF="#htoc3">2.1&#XA0;&#XA0;Grammar conventions</A>
-</LI><LI CLASS="li-toc"><A HREF="#htoc4">2.2&#XA0;&#XA0;Annotation file</A>
-</LI><LI CLASS="li-toc"><A HREF="#htoc5">2.3&#XA0;&#XA0;Package definitions</A>
-</LI><LI CLASS="li-toc"><A HREF="#htoc6">2.4&#XA0;&#XA0;Annotation definitions</A>
-</LI><LI CLASS="li-toc"><A HREF="#htoc7">2.5&#XA0;&#XA0;Class definitions</A>
-</LI><LI CLASS="li-toc"><A HREF="#htoc8">2.6&#XA0;&#XA0;Dependence on bytecode offsets</A>
-</LI><LI CLASS="li-toc"><A HREF="#htoc9">2.7&#XA0;&#XA0;Source code locations</A>
+</LI><LI CLASS="li-toc"><A HREF="#htoc4">2.2&#XA0;&#XA0;Java file grammar</A>
+</LI><LI CLASS="li-toc"><A HREF="#htoc5">2.3&#XA0;&#XA0;Code Locations</A>
+</LI><LI CLASS="li-toc"><A HREF="#htoc6">2.4&#XA0;&#XA0;Annotations</A>
 </LI></UL>
-</LI><LI CLASS="li-toc"><A HREF="#htoc10">3&#XA0;&#XA0;Example</A>
-</LI><LI CLASS="li-toc"><A HREF="#htoc11">4&#XA0;&#XA0;Types and values</A>
-</LI><LI CLASS="li-toc"><A HREF="#htoc12">5&#XA0;&#XA0;Alternative formats</A>
+</LI><LI CLASS="li-toc"><A HREF="#htoc7">3&#XA0;&#XA0;Example</A>
+</LI><LI CLASS="li-toc"><A HREF="#htoc8">4&#XA0;&#XA0;Types and values</A>
+</LI><LI CLASS="li-toc"><A HREF="#htoc9">5&#XA0;&#XA0;Alternative formats</A>
+</LI><LI CLASS="li-toc"><A HREF="#htoc10">6&#XA0;&#XA0;Design and Implementation Details</A>
+<UL CLASS="toc"><LI CLASS="li-toc">
+<A HREF="#htoc11">6.1&#XA0;&#XA0;<TT>scene-lib</TT></A>
+</LI><LI CLASS="li-toc"><A HREF="#htoc12">6.2&#XA0;&#XA0;<TT>asmx</TT></A>
+</LI><LI CLASS="li-toc"><A HREF="#htoc13">6.3&#XA0;&#XA0;<TT>annotation-file-utilities</TT></A>
+</LI></UL>
 </LI></UL><!--TOC section Purpose: External storage of annotations-->
 <H2 CLASS="section"><!--SEC ANCHOR --><A NAME="htoc1">1</A>&#XA0;&#XA0;Purpose: External storage of annotations<A NAME="purpose"></A></H2><!--SEC END --><P>Java annotations are meta-data about Java program elements, as in
-&#X201C;<TT>@Deprecated class Date { ... }</TT>&#X201D;.
+&#X201C;<TT>@Deprecated class Date { &#X2026; }</TT>&#X201D;.
 Ordinarily, Java annotations are written in the source code of a
 <TT>.java</TT> Java source file. When <TT>javac</TT> compiles the source code,
 it inserts the annotations in the resulting <TT>.class</TT> file (as
@@ -86,11 +89,11 @@ performing some specialized task (such as code verification,
 parallelization, etc.) can store annotations in an annotation file without
 changing the main version of the source code. (The developer&#X2019;s private
 version of the code could contain the annotations, but the developer
-could copy them to the separate file before committing changes.)
+could move them to the separate file before committing changes.)
 </LI><LI CLASS="li-itemize">Tool writers may find it more convenient to use a textual file, rather
 than writing a Java or <TT>.class</TT> file parser.
 </LI><LI CLASS="li-itemize">When debugging annotation-processing tools, a textual file format
-(extracted from the Java or <TT>.class</TT> files) is easier to read, and
+(extracted from the Java or <TT>.class</TT> files) is easier to read and
 is easier for use in testing.
 </LI></UL><P>All of these uses require an external, textual file format for Java annotations.
 The external file format should be easy for people to create, read, and
@@ -99,24 +102,28 @@ An &#X201C;annotation file&#X201D; serves this purpose by specifying a set of
 Java annotations.
 The Annotation File Utilities
 (<A HREF="http://types.cs.washington.edu/annotation-file-utilities/"><TT>http://types.cs.washington.edu/annotation-file-utilities/</TT></A>) are a set
-of tools that process annotation files.</P><P>The file format discussed in this document supports both standard Java SE 6
-annotations and also the extended annotations proposed in JSR 308&#XA0;[<A HREF="#JSR308">Ern08</A>].
-Section &#X201C;Class File Format Extensions&#X201D; of the JSR 308 design document
-explains how the extended annotations are stored in the <TT>.class</TT>
-file. The
-annotation file closely follows the class file format.
+of tools that process annotation files.</P><P>The file format discussed in this document supports both standard Java SE 5
+declaration annotations and also the type annotations that are introduced by Java SE 8.
+The file format provides a simple syntax to represent the structure of a Java
+program. For annotations in method bodies of <TT>.class</TT> files the annotation
+file closely follows
+section &#X201C;Class File Format Extensions&#X201D; of the JSR 308 design document&#XA0;[<A HREF="#JSR308-webpage-201110">Ern11</A>],
+which explains how the annotations are stored in the <TT>.class</TT>
+file.
 In that sense, the current design is extremely low-level, and users
-probably would not want to write the files by hand (but might fill in a
+probably would not want to write the files by hand (but they might fill in a
 template that a tool generated automatically). As future work, we should
 design a more
 user-friendly format that permits Java signatures to be directly specified.
-Furthermore, since the current design is closely aligned to the class file,
-it is convenient for tools that operate on <TT>.class</TT> files but less
-convenient for tools that operate on <TT>.java</TT> files.
-For the short term, the low-level format will serve our purpose, which is
-primarily to enable testing by the Javari developers.</P><P>By convention, an annotation file ends with &#X201C;<TT>.jaif</TT>&#X201D; (for &#X201C;Java
+For <TT>.java</TT> source files, the file format provides a separate, higher-level
+syntax for annotations in method bodies.</P><P>By convention, an annotation file ends with &#X201C;<TT>.jaif</TT>&#X201D; (for &#X201C;Java
 annotation index file&#X201D;), but this is not required.</P><!--TOC section Grammar-->
-<H2 CLASS="section"><!--SEC ANCHOR --><A NAME="htoc2">2</A>&#XA0;&#XA0;Grammar<A NAME="grammar"></A></H2><!--SEC END --><!--TOC subsection Grammar conventions-->
+<H2 CLASS="section"><!--SEC ANCHOR --><A NAME="htoc2">2</A>&#XA0;&#XA0;Grammar<A NAME="grammar"></A></H2><!--SEC END --><P>This section describes the annotation file format in detail by presenting it in
+the form of a grammar. Section&#XA0;<A HREF="#grammar-conventions">2.1</A> details the conventions
+of the grammar. Section&#XA0;<A HREF="#java-file-grammar">2.2</A> shows how to represent the
+basic structure of a Java program (classes, methods, etc.) in an annotation
+file. Section&#XA0;<A HREF="#annotations-grammar">2.4</A> shows how to add annotations to an
+annotation file.</P><!--TOC subsection Grammar conventions-->
 <H3 CLASS="subsection"><!--SEC ANCHOR --><A NAME="htoc3">2.1</A>&#XA0;&#XA0;Grammar conventions<A NAME="grammar-conventions"></A></H3><!--SEC END --><P>Throughout this document, &#X201C;name&#X201D; is any valid Java simple name or 
 binary name, &#X201C;type&#X201D; is any valid type, and &#X201C;value&#X201D; is any
 valid Java constant, and quoted strings are literal values.
@@ -124,7 +131,7 @@ The Kleene qualifiers &#X201C;*&#X201D; (zero or more), &#X201C;?&#X201D; (zero 
 (one or more) denote plurality of a grammar element.
 A vertical bar (&#X201C;|&#X201D;) separates alternatives.
 Parentheses (&#X201C;()&#X201D;) denote grouping, and square brackets (&#X201C;[]&#X201D;)
-denote optional syntax, which is equivalent to &#X201C;( ... ) ?&#X201D; but more concise.
+denote optional syntax, which is equivalent to &#X201C;( &#X2026; ) ?&#X201D; but more concise.
 We use the hash/pound/octothorpe symbol (&#X201C;#&#X201D;) for comments within the grammar. </P><P>In the annotation file,
 besides its use as token separator, 
 whitespace (excluding
@@ -135,277 +142,277 @@ program elements in the class (see the example in Section&#XA0;<A HREF="#example
 syntax employed by Java for single-line comments: anything following
 two adjacent slashes (&#X201C;//&#X201D;) until the first newline is a comment.
 This is omitted from the grammar for simplicity.
-Block comments (&#X201C;/* ... */&#X201D;) are not allowed.</P><P>The line end symbol &#X201C;<B>\n</B>&#X201D; is used for all the different line end
-conventions, that is, Windows- and Unix-style new lines are supported.</P><!--TOC subsection Annotation file-->
-<H3 CLASS="subsection"><!--SEC ANCHOR --><A NAME="htoc4">2.2</A>&#XA0;&#XA0;Annotation file<A NAME="annotation-file"></A></H3><!--SEC END --><P>The annotation file itself contains one or more
-package definitions; each package definition describes one or more
-annotations and classes in that package.</P><TABLE border=0 cellspacing=0 cellpadding=0><TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>annotation-file</EM></FONT> ::=</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>package-definition</EM></FONT>+
-</TD></TR>
-</TABLE><P>The annotation file may omit certain program elements &#X2014; for instance, it
-may mention only some of the packages in your program, or only some of the
+Block comments (&#X201C;/* &#X2026; */&#X201D;) are not allowed.</P><P>The line end symbol &#X201C;<B>\n</B>&#X201D; is used for all the different line end
+conventions, that is, Windows- and Unix-style newlines are supported.</P><!--TOC subsection Java file grammar-->
+<H3 CLASS="subsection"><!--SEC ANCHOR --><A NAME="htoc4">2.2</A>&#XA0;&#XA0;Java file grammar<A NAME="java-file-grammar"></A></H3><!--SEC END --><P>This section shows how to represent the basic structure of a Java program
+(classes, methods, etc.) in an annotation file. For Java elements that can
+contain annotations, this section will reference grammar productions contained
+in Section&#XA0;<A HREF="#annotations-grammar">2.4</A>, which describes how annotations are used
+in an annotation file.</P><P>An annotation file has the same basic structure as a Java program. That is,
+there are packages, classes, fields and methods.</P><P>The annotation file may omit certain program elements &#X2014; for instance, it
+may mention only some of the packages in a program, or only some of the
 classes in a package, or only some of the fields or methods of a class.
 Program elements that do not appear in the annotation file are treated as
-unannotated.</P><!--TOC subsection Package definitions-->
-<H3 CLASS="subsection"><!--SEC ANCHOR --><A NAME="htoc5">2.3</A>&#XA0;&#XA0;Package definitions<A NAME="package-definitions"></A></H3><!--SEC END --><P>Package definitions describe a package containing a list of annotation
+unannotated.</P><!--TOC subsubsection Package definitions-->
+<H4 CLASS="subsubsection"><!--SEC ANCHOR -->2.2.1&#XA0;&#XA0;Package definitions<A NAME="package-definitions"></A></H4><!--SEC END --><P>At the root of an annotation file is one or more package definitions.
+A package definition describes a package containing a list of annotation
 definitions and classes. A package definition also contains any
-annotations on the package itself (such as those from a
-<TT>package-info.java</TT> file).</P><TABLE border=0 cellspacing=0 cellpadding=0><TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>package-definition</EM></FONT> ::=</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# To specify the default package, omit the name.</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# Annotations on the default package are not allowed.</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>package</B>&#X201D; [ <FONT COLOR=purple><EM>name</EM></FONT>? &#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* ] &#X201C;<B>\n</B>&#X201D;</TD></TR>
+annotations on the package (such as those from a
+<TT>package-info.java</TT> file).</P><TABLE border=0 cellspacing=0 cellpadding=0><TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>annotation-file</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>package-definition</EM></FONT>+</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>package-definition</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>package</B>&#X201D; ( &#X201C;<B>:</B>&#X201D; ) | ( <FONT COLOR=purple><EM>name</EM></FONT> &#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>decl-annotation</EM></FONT>* ) &#X201C;<B>\n</B>&#X201D;</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;( <FONT COLOR=purple><EM>annotation-definition</EM></FONT> | <FONT COLOR=purple><EM>class-definition</EM></FONT> ) *
 </TD></TR>
-</TABLE><!--TOC subsection Annotation definitions-->
-<H3 CLASS="subsection"><!--SEC ANCHOR --><A NAME="htoc6">2.4</A>&#XA0;&#XA0;Annotation definitions<A NAME="annotation-definitions"></A></H3><!--SEC END --><P>An annotation definition describes the annotation&#X2019;s fields and their
-types, so that they may be referenced in a compact way throughout the
-annotation file.</P><P>The Annotation File Utilities can read annotation definitions from the
-classpath, so it is optional to define them in the annotation file.</P><P>If an annotation is defined in the annotation file, then it must be defined
-before it is used.
-(This requirement makes it impossible to define, in an
-annotation file, an annotation that is meta-annotated with itself.)
-In the annotation file, the annotation definition appears within the
-package that defines the annotation. The annotation may be applied to
-elements of any package.</P><TABLE border=0 cellspacing=0 cellpadding=0><TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>annotation-definition</EM></FONT> ::=</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>annotation</B>&#X201D; &#X201C;<B>@</B>&#X201D;<FONT COLOR=purple><EM>name</EM></FONT>
-&#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>annotation-field-definition</EM></FONT>*</TD></TR>
-<TR><TD ALIGN=left NOWRAP></TD></TR>
-<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>annotation-field-definition</EM></FONT> ::=</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>annotation-field-type</EM></FONT> <FONT COLOR=purple><EM>name</EM></FONT> &#X201C;<B>\n</B>&#X201D;</TD></TR>
-<TR><TD ALIGN=left NOWRAP></TD></TR>
-<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>annotation-field-type</EM></FONT> ::=</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# <FONT COLOR=purple><EM>primitive-type</EM></FONT> is any Java primitive type (<TT>int</TT>, <TT>boolean</TT>, etc.).</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# These are described in detail in Section&#XA0;<A HREF="#types-and-values">4</A>.</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;(<FONT COLOR=purple><EM>primitive-type</EM></FONT> | &#X201C;<B>String</B>&#X201D; | &#X201C;<B>Class</B>&#X201D;
-| (&#X201C;<B>enum</B>&#X201D; <FONT COLOR=purple><EM>name</EM></FONT>) | (&#X201C;<B>annotation-field</B>&#X201D; <FONT COLOR=purple><EM>name</EM></FONT>)) &#X201C;<B>[]</B>&#X201D;?</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| &#X201C;<B>unknown[]</B>&#X201D; &#X201C;<B>\n</B>&#X201D;</TD></TR>
-</TABLE><!--TOC subsection Class definitions-->
-<H3 CLASS="subsection"><!--SEC ANCHOR --><A NAME="htoc7">2.5</A>&#XA0;&#XA0;Class definitions<A NAME="class-definitions"></A></H3><!--SEC END --><P>Class definitions describe the annotations present on the various
-program elements. It is organized according to the hierarchy of fields
-and methods in the class.
-Class definitions
-are defined by the <TT>class-definition</TT> production of the following grammar.
-Note that we use <TT>class-definition</TT> also for interfaces, enums, and
-annotation types; for syntactic simplicity, we use &#X201C;<B>class</B>&#X201D; for
+</TABLE><P>Use a package line of <TT>package:</TT> for the default package. Note that
+annotations on the default package are not allowed.</P><!--TOC subsubsection Class definitions-->
+<H4 CLASS="subsubsection"><!--SEC ANCHOR -->2.2.2&#XA0;&#XA0;Class definitions<A NAME="class-definitions"></A></H4><!--SEC END --><P>A class definition describes the annotations present on a class declaration,
+as well fields and methods of the class. It is organized according to
+the hierarchy of fields and methods in the class.
+Note that we use <FONT COLOR=purple><EM>class-definition</EM></FONT> also for interfaces, enums, and
+annotation types (to specify annotations in an existing annotation type, not to
+be confused with <FONT COLOR=purple><EM>annotation-definition</EM></FONT>s described in
+Section&#XA0;<A HREF="#annotation-definitions">2.4.1</A>, which defines annotations to be used
+throughout an annotation file); for syntactic simplicity, we use &#X201C;<B>class</B>&#X201D;
+for
 all such definitions.
 </P><P>Inner classes are treated as ordinary classes whose names happen to contain
 <TT>$</TT> signs and must be defined at the top level of a class definition file.
 (To change this, the grammar would have to be extended with a closing
 delimiter for classes; otherwise, it would be ambiguous whether a
-field/method appearing after an inner class definition belonged to the
+field or method appearing after an inner class definition belonged to the
 inner class or the outer class.) The syntax for inner class names is the same as
 is used by the <TT>javac</TT> compiler. A good way to get an idea of the inner
 class names for a class is to compile the class and look at the filenames of the
-<TT>.class</TT> files that are produced.</P><TABLE border=0 cellspacing=0 cellpadding=0><TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>annotation</EM></FONT> ::=</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The name may be the annotation&#X2019;s simple name, unless the file</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# contains definitions for two annotations with the same simple name.</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# In this case, the binary name of the annotation name is required</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# (like the fully-qualified name, but with $ for inner classes).</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>@</B>&#X201D;<FONT COLOR=purple><EM>name</EM></FONT> [ &#X201C;<B>(</B>&#X201D; <FONT COLOR=purple><EM>annotation-field</EM></FONT> [ &#X201C;<B>,</B>&#X201D; <FONT COLOR=purple><EM>annotation-field</EM></FONT> ]+ &#X201C;<B>)</B>&#X201D; ]</TD></TR>
-<TR><TD ALIGN=left NOWRAP></TD></TR>
-<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>annotation-field</EM></FONT> ::=</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# In Java, if a single-field annotation has a field named</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# &#X201C;<TT>value</TT>&#X201D;, then that field name may be elided in uses
-of the</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# annotation: &#X201C;<TT>@A(12)</TT>&#X201D; rather than &#X201C;<TT>@A(value=12)</TT>&#X201D;.</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The same convention holds in an annotation file.</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>name</EM></FONT> &#X201C;<B>=</B>&#X201D; <FONT COLOR=purple><EM>value</EM></FONT></TD></TR>
-<TR><TD ALIGN=left NOWRAP></TD></TR>
-<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>class-definition</EM></FONT> ::=</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>class</B>&#X201D; <FONT COLOR=purple><EM>name</EM></FONT> &#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
+<TT>.class</TT> files that are produced.</P><TABLE border=0 cellspacing=0 cellpadding=0><TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>class-definition</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>class</B>&#X201D; <FONT COLOR=purple><EM>name</EM></FONT> &#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>decl-annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>typeparam-definition</EM></FONT>*</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>bound-definition</EM></FONT>*</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>extends-definition</EM></FONT>*</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>implements-definition</EM></FONT>*</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>typeparam-bound</EM></FONT>*</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>extends</EM></FONT>*</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>implements</EM></FONT>*</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>field-definition</EM></FONT>*</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>method-definition</EM></FONT>*</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>method-definition</EM></FONT>*
+</TD></TR>
+</TABLE><P>Annotations on the &#X201C;<B>class</B>&#X201D; line are annotations on the class declaration,
+not the class name.</P><!--TOC paragraph Type parameter definitions-->
+<H5 CLASS="paragraph"><!--SEC ANCHOR -->Type parameter definitions</H5><!--SEC END --><P>The <FONT COLOR=purple><EM>typeparam-definition</EM></FONT> production defines annotations on the
+declaration of a type parameter, such as on <TT>K</TT> and <TT>T</TT> in</P><PRE CLASS="verbatim">public class Class&lt;K&gt; {
+    public &lt;T&gt; void m() {
+        ...
+    }
+}
+</PRE><TABLE border=0 cellspacing=0 cellpadding=0><TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>typeparam-definition</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The integer is the zero-based type parameter index.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>typeparam</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> &#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>type-annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
+</TABLE><!--TOC paragraph Type Parameter Bounds-->
+<H5 CLASS="paragraph"><!--SEC ANCHOR -->Type Parameter Bounds</H5><!--SEC END --><P>The <FONT COLOR=purple><EM>typeparam-bound</EM></FONT> production defines annotations on a bound of a
+type variable declaration, such as on <TT>Number</TT> and <TT>Date</TT> in</P><PRE CLASS="verbatim">public class Class&lt;K extends Number&gt; {
+    public &lt;T extends Date&gt; void m() {
+        ...
+    }
+}
+</PRE><TABLE border=0 cellspacing=0 cellpadding=0><TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>typeparam-bound</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The integers are respectively the parameter and bound indexes of</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# the type parameter bound&#XA0;[<A HREF="#JSR308-webpage-201110">Ern11</A>].</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>bound</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> &#X201C;<B>&amp;</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> &#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>type-annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>compound-type</EM></FONT>*
+</TD></TR>
+</TABLE><!--TOC paragraph Implements and extends-->
+<H5 CLASS="paragraph"><!--SEC ANCHOR -->Implements and extends</H5><!--SEC END --><P>The <FONT COLOR=purple><EM>extends</EM></FONT> and <FONT COLOR=purple><EM>implements</EM></FONT> productions
+define annotations on the names of classes a class <TT>extends</TT> or
+<TT>implements</TT>.</P><TABLE border=0 cellspacing=0 cellpadding=0><TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>extends</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>extends</B>&#X201D; &#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>type-annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>compound-type</EM></FONT>*</TD></TR>
 <TR><TD ALIGN=left NOWRAP></TD></TR>
-<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>extends-definition</EM></FONT> ::=</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# Only type annotations are allowed.</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>extends</B>&#X201D; &#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>type-argument-or-array-definition</EM></FONT>*</TD></TR>
-<TR><TD ALIGN=left NOWRAP></TD></TR>
-<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>implements-definition</EM></FONT> ::=</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# Only type annotations are allowed.</TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>implements</EM></FONT> ::=</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The integer is the zero-based index of the implemented interface.</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>implements</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> &#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>type-argument-or-array-definition</EM></FONT>*</TD></TR>
-<TR><TD ALIGN=left NOWRAP></TD></TR>
-<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>field-definition</EM></FONT> ::=</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The annotation on the &#X201C;<B>field</B>&#X201D; line is that of the field declaration,</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# while the annotation on the &#X201C;<B>type</B>&#X201D; line is that of outermost type.</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# <FONT COLOR=purple><EM>source-insert-typecast-definition</EM></FONT> is described in Section&#XA0;<A HREF="#ast-paths">2.7.2</A>.</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# Casts can only be inserted on a field if the field is initialized at declaration.</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# Otherwise, if the field is assigned in a method the cast can be inserted within a</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# <FONT COLOR=purple><EM>method-definition</EM></FONT> rule.</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>field</B>&#X201D; <FONT COLOR=purple><EM>name</EM></FONT> &#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>implements</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> &#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>type-annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>compound-type</EM></FONT>*
+</TD></TR>
+</TABLE><!--TOC subsubsection Field definitions-->
+<H4 CLASS="subsubsection"><!--SEC ANCHOR -->2.2.3&#XA0;&#XA0;Field definitions<A NAME="field-definitons"></A></H4><!--SEC END --><P>A field definition can have annotations on the declaration, the type of the
+field, or &#X2014; if in source code &#X2014; the field&#X2019;s initialization.</P><TABLE border=0 cellspacing=0 cellpadding=0><TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>field-definition</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>field</B>&#X201D; <FONT COLOR=purple><EM>name</EM></FONT> &#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>decl-annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>type-annotations</EM></FONT>*</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>source-insert-typecast-definition</EM></FONT>*</TD></TR>
-<TR><TD ALIGN=left NOWRAP></TD></TR>
-<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>method-definition</EM></FONT> ::=</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The method-key consists of the name followed by the signature</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# in JVML format, for example: &#X201C;<TT>foo([ILjava/lang/String;)V</TT>&#X201D;.</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# Note that the signature is the erased signature of the method and does not</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# contain generic type information, but does contain the return type.</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# Using <TT>javap -s</TT> makes it easy to find the signature.</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# &#X201C;<TT>&lt;init&gt;</TT>&#X201D; and &#X201C;<TT>&lt;clinit&gt;</TT>&#X201D; are used to name instance and class initialization methods.</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The annotation on the &#X201C;<B>method</B>&#X201D; line is that on the method, not on the return value.</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The <FONT COLOR=purple><EM>source-*-definition</EM></FONT> rules are described in Section&#XA0;<A HREF="#additional-locations">2.7</A>.</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>method</B>&#X201D; <FONT COLOR=purple><EM>method-key</EM></FONT> &#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>expression-annotations</EM></FONT>*
+</TD></TR>
+</TABLE><P>Annotations on the &#X201C;<B>field</B>&#X201D; line are on the field declaration, not the
+type of the field.</P><P>The <FONT COLOR=purple><EM>expression-annotations</EM></FONT> production specifies annotations on the
+initialization expression of a field. If a field is initialized at declaration
+then in bytecode the initialization is moved to the constructor when the class
+is compiled. Therefore for bytecode, annotations on the initialization
+expression go in the constructor (see Section&#XA0;<A HREF="#method-definitions">2.2.4</A>), rather
+than the field definition. Source code annotations for the field initialization
+expression are valid on the field definition.</P><!--TOC subsubsection Method definitions-->
+<H4 CLASS="subsubsection"><!--SEC ANCHOR -->2.2.4&#XA0;&#XA0;Method definitions<A NAME="method-definitions"></A></H4><!--SEC END --><P>A method definition can have annotations on the method declaration, in the
+method header (return type, parameters, etc.), as well as the method body.</P><TABLE border=0 cellspacing=0 cellpadding=0><TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>method-definition</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>method</B>&#X201D; <FONT COLOR=purple><EM>method-key</EM></FONT> &#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>decl-annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>typeparam-definition</EM></FONT>*</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>bound-definition</EM></FONT>*</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>return-definition</EM></FONT>?</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>typeparam-bound</EM></FONT>*</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>return-type</EM></FONT>?</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>receiver-definition</EM></FONT>?</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>parameter-definition</EM></FONT>*</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>variable-definition</EM></FONT>*</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>typecast-definition</EM></FONT>*</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>instanceof-definition</EM></FONT>*</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>new-definition</EM></FONT>*</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>source-variable-definition</EM></FONT>*</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>source-typecast-definition</EM></FONT>*</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>source-instanceof-definition</EM></FONT>*</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>source-new-definition</EM></FONT>*</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>source-insert-typecast-definition</EM></FONT>*</TD></TR>
-<TR><TD ALIGN=left NOWRAP></TD></TR>
-<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>type-annotations</EM></FONT> ::=</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# holds the type annotations, as opposed to the declaration annotations</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>type:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>type-argument-or-array-definition</EM></FONT>*</TD></TR>
-<TR><TD ALIGN=left NOWRAP></TD></TR>
-<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>type-argument-or-array-definition</EM></FONT> ::=</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The integer list here contains the values of the
-&#X201C;<A HREF="http://types.cs.washington.edu/jsr308/specification/java-annotation-design.html#class-file:ext:type_path">type_path</A>&#X201D;
-structure&#XA0;[<A HREF="#JSR308">Ern08</A>].</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>inner-type</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> &#X201C;<B>,</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> [ &#X201C;<B>,</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> &#X201C;<B>,</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> ]* &#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
-<TR><TD ALIGN=left NOWRAP></TD></TR>
-<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>typeparam-definition</EM></FONT> ::=</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The integer is the zero-based type parameter index.</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>typeparam</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> &#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
-<TR><TD ALIGN=left NOWRAP></TD></TR>
-<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>bound-definition</EM></FONT> ::=</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The integers are respectively the parameter and bound indices of</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# the type parameter bound&#XA0;[<A HREF="#JSR308">Ern08</A>].</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>bound</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> &#X201C;<B>&amp;</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> &#X201C;<B>:</B>&#X201D;
-<FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>type-argument-or-array-definition</EM></FONT>*</TD></TR>
-<TR><TD ALIGN=left NOWRAP></TD></TR>
-<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>return-definition</EM></FONT> ::=</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>return:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>type-argument-or-array-definition</EM></FONT>*</TD></TR>
-<TR><TD ALIGN=left NOWRAP></TD></TR>
-<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>receiver-definition</EM></FONT> ::=</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>receiver:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>type-argument-or-array-definition</EM></FONT>*</TD></TR>
-<TR><TD ALIGN=left NOWRAP></TD></TR>
-<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>parameter-definition</EM></FONT> ::=</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The integer is the index of the formal parameter in the method</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# (i.e., 0 is the first formal parameter. The receiver parameter is not index 0.</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# Use <FONT COLOR=purple><EM>receiver-definition</EM></FONT> to annotate the receiver parameter.)</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The annotation on the &#X201C;<B>parameter</B>&#X201D; line is that of the formal parameter declaration,</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# while the annotation on the &#X201C;<B>type</B>&#X201D; line is that of the outermost type of the parameter.</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>parameter</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> &#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>type-annotations</EM></FONT>*</TD></TR>
-<TR><TD ALIGN=left NOWRAP></TD></TR>
-<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>variable-definition</EM></FONT> ::=</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The integers are respectively the index, start, and length</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# fields of the annotations on this variable&#XA0;[<A HREF="#JSR308">Ern08</A>].</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The annotation on the &#X201C;<B>local</B>&#X201D; line is that of the variable declaration,</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# while the annotation on the &#X201C;<B>type</B>&#X201D; line is that of the outermost type of the variable.</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# A source code index can be used instead. See <FONT COLOR=purple><EM>source-variable-definition</EM></FONT> in Section&#XA0;<A HREF="#source-code-index">2.7.1</A>.</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>local</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> &#X201C;<B>#</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> &#X201C;<B>+</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> &#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>type-annotations</EM></FONT>*</TD></TR>
-<TR><TD ALIGN=left NOWRAP></TD></TR>
-<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>typecast-definition</EM></FONT> ::=</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The first integer is the offset field and the optional second integer</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# is the type index of an intersection type&#XA0;[<A HREF="#JSR308">Ern08</A>].</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The type index defaults to zero if not specified.</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# A source code index can be used instead. See <FONT COLOR=purple><EM>source-typecast-definition</EM></FONT> in Section&#XA0;<A HREF="#source-code-index">2.7.1</A>.</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>typecast</B>&#X201D; &#X201C;<B>#</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT>
-[ &#X201C;<B>,</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> ] &#X201C;<B>:</B>&#X201D;
-<FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>type-argument-or-array-definition</EM></FONT>*</TD></TR>
-<TR><TD ALIGN=left NOWRAP></TD></TR>
-<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>instanceof-definition</EM></FONT> ::=</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The integer is the offset field of the annotation&#XA0;[<A HREF="#JSR308">Ern08</A>].</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# A source code index can be used instead. See <FONT COLOR=purple><EM>source-instanceof-definition</EM></FONT> in Section&#XA0;<A HREF="#source-code-index">2.7.1</A>.</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>instanceof</B>&#X201D; &#X201C;<B>#</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> &#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>type-argument-or-array-definition</EM></FONT>*</TD></TR>
-<TR><TD ALIGN=left NOWRAP></TD></TR>
-<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>new-definition</EM></FONT> ::=</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The integer is the offset field of the annotation&#XA0;[<A HREF="#JSR308">Ern08</A>].</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# A source code index can be used instead. See <FONT COLOR=purple><EM>source-new-definition</EM></FONT> in Section&#XA0;<A HREF="#source-code-index">2.7.1</A>.</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>new</B>&#X201D; &#X201C;<B>#</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> &#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>type-argument-or-array-definition</EM></FONT>*</TD></TR>
-</TABLE><!--TOC subsection Dependence on bytecode offsets-->
-<H3 CLASS="subsection"><!--SEC ANCHOR --><A NAME="htoc8">2.6</A>&#XA0;&#XA0;Dependence on bytecode offsets<A NAME="bytecode-offsets"></A></H3><!--SEC END --><P>For annotations on expressions (typecasts, instanceof, new, etc.), the
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>expression-annotations</EM></FONT>*
+</TD></TR>
+</TABLE><P>The annotations on the &#X201C;<B>method</B>&#X201D; line are on the method declaration, not
+on the return value. The <FONT COLOR=purple><EM>method-key</EM></FONT> consists of the name followed by the
+signature in JVML format. For example, the following method</P><PRE CLASS="verbatim">boolean foo(int[] i, String s) {
+  ...
+}
+</PRE><P>has the <FONT COLOR=purple><EM>method-key</EM></FONT>:</P><PRE CLASS="verbatim">foo([ILjava/lang/String;)Z
+</PRE><P>Note that the
+signature is the erased signature of the method and does not contain generic
+type information, but does contain the return type. Using <TT>javap -s</TT> makes
+it easy to find the signature. The method keys &#X201C;<TT>&lt;init&gt;</TT>&#X201D; and
+&#X201C;<TT>&lt;clinit&gt;</TT>&#X201D; are used to name instance (constructor) and class (static)
+initialization methods.</P><!--TOC paragraph Return type-->
+<H5 CLASS="paragraph"><!--SEC ANCHOR -->Return type</H5><!--SEC END --><P>A return type defines the annotations on the return type of a method
+declaration.</P><TABLE border=0 cellspacing=0 cellpadding=0><TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>return-type</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>return:</B>&#X201D; <FONT COLOR=purple><EM>type-annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>compound-type</EM></FONT>*
+</TD></TR>
+</TABLE><!--TOC paragraph Receiver definition-->
+<H5 CLASS="paragraph"><!--SEC ANCHOR -->Receiver definition</H5><!--SEC END --><P>A receiver definition defines the annotations on the type of the receiver
+parameter in a method declaration. A method receiver is the implicit formal
+parameter, <TT>this</TT>, used in non-static methods. For source code insertion,
+the receiver parameter will be inserted if it does not already exist.</P><TABLE border=0 cellspacing=0 cellpadding=0><TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>receiver-definition</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>receiver:</B>&#X201D; <FONT COLOR=purple><EM>type-annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>compound-type</EM></FONT>*
+</TD></TR>
+</TABLE><!--TOC paragraph Parameter definition-->
+<H5 CLASS="paragraph"><!--SEC ANCHOR -->Parameter definition</H5><!--SEC END --><P>A parameter definition defines the annotations on a method parameter declaration
+and the type of a method parameter.</P><TABLE border=0 cellspacing=0 cellpadding=0><TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>parameter-definition</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The integer is the index of the formal parameter in the method.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>parameter</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> &#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>decl-annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>type-annotations</EM></FONT>*
+</TD></TR>
+</TABLE><P>The annotations on the &#X201C;<B>parameter</B>&#X201D; line are on the formal parameter
+declaration, not on the type of the parameter. A parameter index of 0 is the
+first formal parameter. The receiver parameter is not index 0. Use the
+<FONT COLOR=purple><EM>receiver-definition</EM></FONT> production to annotate the receiver parameter.</P><!--TOC subsection Code Locations-->
+<H3 CLASS="subsection"><!--SEC ANCHOR --><A NAME="htoc5">2.3</A>&#XA0;&#XA0;Code Locations<A NAME="code-locations"></A></H3><!--SEC END --><P>Certain elements in the body of a method or the initialization expression of a
+field can be annotated. The <FONT COLOR=purple><EM>expression-annotations</EM></FONT> rule describes the
+annotations that can be added to a method body or a field initialization
+expression:</P><TABLE border=0 cellspacing=0 cellpadding=0><TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>expression-annotations</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>typecast</EM></FONT>*</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>instanceof</EM></FONT>*</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>new</EM></FONT>*</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>source-insert-typecast</EM></FONT>*
+</TD></TR>
+</TABLE><P>Additionally, a variable declaration in a method body can be annotated with the
+<FONT COLOR=purple><EM>variable-definition</EM></FONT> rule, which appears below.</P><P>Because of the differences between Java source code and <TT>.class</TT> files,
+the syntax for specifying code locations is different for <TT>.class</TT> files
+and source code. For <TT>.class</TT> files we use a syntax called &#X201C;bytecode
+offsets&#X201D;. For source code we use a different syntax called &#X201C;source code
+indexes&#X201D;. These are both described below.</P><P>If you wish to be able to insert a given code annotation in both a <TT>.class</TT> file and a source
+code file, the annotation file must redundantly specify the annotation&#X2019;s bytecode offset and source
+code index. This can be done in a single <TT>.jaif</TT> file or two separate
+<TT>.jaif</TT> files. It is not necessary to include
+redundant information to insert annotations on signatures in both <TT>.class</TT>
+files and source code.</P><P>Additionally, a new typecast with annotations (rather than an annotation added to an
+existing typecast) can be inserted into source code. This uses a third
+syntax that is described below under &#X201C;AST paths&#X201D;.</P><!--TOC subsubsection Bytecode offsets-->
+<H4 CLASS="subsubsection"><!--SEC ANCHOR -->2.3.1&#XA0;&#XA0;Bytecode offsets<A NAME="bytecode-offsets"></A></H4><!--SEC END --><P>For locations in bytecode, the
 annotation file uses offsets into the bytecode array of the class file to
 indicate the specific expression to which the annotation refers. Because
 different compilation strategies yield different <TT>.class</TT> files, a
 tool that maps such annotations from an annotation file into source code must
 have access to the specific <TT>.class</TT> file that was used to generate
-the annotation file. For non-expression annotations such as those on methods,
-fields, classes, etc., the <TT>.class</TT> file is not necessary.</P><!--TOC subsection Source code locations-->
-<H3 CLASS="subsection"><!--SEC ANCHOR --><A NAME="htoc9">2.7</A>&#XA0;&#XA0;Source code locations<A NAME="additional-locations"></A></H3><!--SEC END --><P>The Annotation File Utilities supports two additional methods to specify a
-location: source code indexes and AST paths. Unfortunately, these methods only
-allow insertion of annotations in source code, not <TT>.class</TT> files.
-Therefore, in order to insert annotations in both <TT>.class</TT> files and source
-code, locations must be redundantly specified as bytecode offsets and source
-code locations. This can be done in a single <TT>.jaif</TT> file or two seperate
-<TT>.jaif</TT> files. However, since bytecode offsets and source code locations
-are not used to add annotations to signatures, it is not necessary to include
-redundant information to insert annotations on signatures in both <TT>.class</TT>
-files and source code.</P><P>Source code indexes and AST paths are described below.</P><!--TOC subsubsection Source code indexes-->
-<H4 CLASS="subsubsection"><!--SEC ANCHOR -->2.7.1&#XA0;&#XA0;Source code indexes<A NAME="source-code-index"></A></H4><!--SEC END --><P>For some tools it is easier to generate the index into the source code
-instead of the bytecode offset.
-As an experimental feature we support the following additional
-elements:</P><TABLE border=0 cellspacing=0 cellpadding=0><TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>source-variable-definition</EM></FONT> ::=</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The <FONT COLOR=purple><EM>name</EM></FONT> is the identifier of the local variable.</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The <FONT COLOR=purple><EM>integer</EM></FONT> is the optional zero-based index of the</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# intended local variable within all local variables with the given
-<FONT COLOR=purple><EM>name</EM></FONT>.</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The default value for the index is zero.</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The annotation on the &#X201C;<B>local</B>&#X201D; line is that of the variable declaration,</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# while the annotation on the &#X201C;<B>type</B>&#X201D; line is that of the outermost type of the variable.</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>local</B>&#X201D; <FONT COLOR=purple><EM>name</EM></FONT> [&#X201C;<B>*</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT>] &#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>type-annotations</EM></FONT>*</TD></TR>
-<TR><TD ALIGN=left NOWRAP></TD></TR>
-<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>source-typecast-definition</EM></FONT> ::=</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The first integer is the zero-based index of the
-typecast within the method and</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# the optional second integer is the type index of an intersection type&#XA0;[<A HREF="#JSR308">Ern08</A>].</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The type index defaults to zero if not specified.</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>typecast</B>&#X201D; &#X201C;<B>*</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> [ &#X201C;<B>,</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> ] &#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>type-argument-or-array-definition</EM></FONT>*</TD></TR>
-<TR><TD ALIGN=left NOWRAP></TD></TR>
-<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>source-instanceof-definition</EM></FONT> ::=</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The integer is the zero-based index of the
-instanceof within the method.</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>instanceof</B>&#X201D; &#X201C;<B>*</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> &#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>type-argument-or-array-definition</EM></FONT>*</TD></TR>
-<TR><TD ALIGN=left NOWRAP></TD></TR>
-<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>source-new-definition</EM></FONT> ::=</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The integer is the zero-based index of the
-object or array creation within the method.</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>new</B>&#X201D; &#X201C;<B>*</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> &#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>type-argument-or-array-definition</EM></FONT>*
-</TD></TR>
-</TABLE><P>We use the star literal &#X201C;<B>*</B>&#X201D; to distinguish source indexes from
-the bytecode offsets that are introduced using &#X201C;<B>#</B>&#X201D;.</P><P>Source code indexes only include occurrences in the class that exactly matches
+the annotation file. The
+<TT>javap -v</TT> command is an effective technique to discover bytecode
+offsets. Non-expression annotations such as those on methods,
+fields, classes, etc., do not use a bytecode offset.</P><!--TOC subsubsection Source code indexes-->
+<H4 CLASS="subsubsection"><!--SEC ANCHOR -->2.3.2&#XA0;&#XA0;Source code indexes<A NAME="source-code-indexes"></A></H4><!--SEC END --><P>For locations in source code, the annotation file indicates the kind of
+expression, plus a zero-based index to indicate which occurence of that kind of
+expression. For example,</P><PRE CLASS="verbatim">public void method() {
+    Object o1 = new @A String();
+    String s = (@B String) o1;
+    Object o2 = new @C Integer(0);
+    Integer i = (@D Integer) o2;
+}
+</PRE><P><TT>@A</TT> is on new, index 0. <TT>@B</TT> is on typecast, index 0. <TT>@C</TT> is on
+new, index 1. <TT>@D</TT> is on typecast, index 1.</P><P>Source code indexes only include occurrences in the class that exactly matches
 the name of the enclosing <FONT COLOR=purple><EM>class-definition</EM></FONT> rule. Specifically,
 occurrences in nested classes are not included. Use a new
 <FONT COLOR=purple><EM>class-definition</EM></FONT> rule with the name of the nested class for source code
-insertions in a nested class.</P><!--TOC subsubsection AST paths-->
-<H4 CLASS="subsubsection"><!--SEC ANCHOR -->2.7.2&#XA0;&#XA0;AST paths<A NAME="ast-paths"></A></H4><!--SEC END --><P>The Annotation File Utilities supports using a path through the AST (abstract
-syntax tree) to specify an arbitrary expression in source code to modify.
-Currently, AST paths can only be used to specify a location to insert a cast.</P><TABLE border=0 cellspacing=0 cellpadding=0><TR><TD ALIGN=left NOWRAP>
-<FONT COLOR=purple><EM>source-insert-typecast-definition</EM></FONT> ::=</TD></TR>
+insertions in a nested class.</P><!--TOC subsubsection Code locations grammar-->
+<H4 CLASS="subsubsection"><!--SEC ANCHOR -->2.3.3&#XA0;&#XA0;Code locations grammar<A NAME="code-grammar"></A></H4><!--SEC END --><P>For each kind of expresion, the grammar contains a separate location rule.
+This location rule contains the bytecode offset syntax followed by the
+source code index syntax.</P><P>The grammar uses &#X201C;<B>#</B>&#X201D; for bytecode offsets and &#X201C;<B>*</B>&#X201D; for source code indexes.</P><TABLE border=0 cellspacing=0 cellpadding=0><TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>variable-location</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# Bytecode offset: the integers are respectively the index, start, and length</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# fields of the annotations on this variable&#XA0;[<A HREF="#JSR308-webpage-201110">Ern11</A>].</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;(<FONT COLOR=purple><EM>integer</EM></FONT> &#X201C;<B>#</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> &#X201C;<B>+</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT>)</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# Source code index: the <FONT COLOR=purple><EM>name</EM></FONT> is the identifier of the local variable.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The <FONT COLOR=purple><EM>integer</EM></FONT> is the optional zero-based index of the intended local</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# variable within all local variables with the given <FONT COLOR=purple><EM>name</EM></FONT>.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The default value for the index is zero.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| (<FONT COLOR=purple><EM>name</EM></FONT> [&#X201C;<B>*</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT>])</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>variable-definition</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The annotations on the &#X201C;<B>local</B>&#X201D; line are on the variable declaration,</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# not the type of the variable.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>local</B>&#X201D; <FONT COLOR=purple><EM>variable-location</EM></FONT> &#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>decl-annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>type-annotations</EM></FONT>*</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>typecast-location</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# Bytecode offset: the first integer is the offset field and the optional</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# second integer is the type index of an intersection type&#XA0;[<A HREF="#JSR308-webpage-201110">Ern11</A>].</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The type index defaults to zero if not specified.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;(&#X201C;<B>#</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> [ &#X201C;<B>,</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> ])</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# Source code index: the first integer is the zero-based index of the typecast</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# within the method and the optional second integer is the type index of an</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# intersection type&#XA0;[<A HREF="#JSR308-webpage-201110">Ern11</A>]. The type index defaults to zero if not specified.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| (&#X201C;<B>*</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> [ &#X201C;<B>,</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> ])</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>typecast</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>typecast</B>&#X201D; <FONT COLOR=purple><EM>typecast-location</EM></FONT> &#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>type-annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>compound-type</EM></FONT>*</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>instanceof-location</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# Bytecode offset: the integer is the offset field of the annotation&#XA0;[<A HREF="#JSR308-webpage-201110">Ern11</A>].</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;(&#X201C;<B>#</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT>)</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# Source code index: the integer is the zero-based index of the <TT>instanceof</TT> within the method.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| (&#X201C;<B>*</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT>)</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>instanceof</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>instanceof</B>&#X201D; <FONT COLOR=purple><EM>instanceof-location</EM></FONT> &#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>type-annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>compound-type</EM></FONT>*</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>new-location</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# Bytecode offset: the integer is the offset field of the annotation&#XA0;[<A HREF="#JSR308-webpage-201110">Ern11</A>].</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;(&#X201C;<B>#</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT>)</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# Source code index: the integer is the zero-based index of the object or array</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# creation within the method.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| (&#X201C;<B>*</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT>)</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>new</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>new</B>&#X201D; <FONT COLOR=purple><EM>new-location</EM></FONT> &#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>type-annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>compound-type</EM></FONT>*
+</TD></TR>
+</TABLE><!--TOC subsubsection AST paths-->
+<H4 CLASS="subsubsection"><!--SEC ANCHOR -->2.3.4&#XA0;&#XA0;AST paths<A NAME="ast-paths"></A></H4><!--SEC END --><P>A path through the AST (abstract
+syntax tree) specifies an arbitrary expression in source code to modify.
+Currently, AST paths can only be used to specify a location to insert a cast.</P><P>For a cast insertion, the <TT>.jaif</TT> file specifies the type to cast to.
+The annotations on the &#X201C;<B>insert-typecast</B>&#X201D; line will be inserted on
+the outermost type of the type to cast to. If the type to cast to is a compound
+type then annotations on parts of the compound type are specified with the
+<FONT COLOR=purple><EM>compound-type</EM></FONT> rule. If there are no annotations on
+the &#X201C;<B>insert-typecast</B>&#X201D; line then a cast with no annotations will be
+inserted or, if compound type annotations are specified, a cast with annotations
+only on the compound types will be inserted.</P><P>Note that the type specified on the &#X201C;<B>insert-typecast</B>&#X201D; line cannot contain
+any qualified type names. For example, use <TT>Entry&lt;String, Object&gt;</TT> instead
+of <TT>Map.Entry&lt;java.lang.String, java.lang.Object&gt;</TT>.</P><TABLE border=0 cellspacing=0 cellpadding=0><TR><TD ALIGN=left NOWRAP>
+<FONT COLOR=purple><EM>source-insert-typecast</EM></FONT> ::=</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# <FONT COLOR=purple><EM>ast-path</EM></FONT> is described below.</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# <FONT COLOR=purple><EM>type</EM></FONT> is the un-annotated type to cast to.</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>insert-typecast</B>&#X201D; <FONT COLOR=purple><EM>ast-path</EM></FONT>&#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* <FONT COLOR=purple><EM>type</EM></FONT> &#X201C;<B>\n</B>&#X201D;</TD></TR>
-</TABLE><P>An AST path represents a traversal through the AST nodes. AST paths are
-restricted for use in <FONT COLOR=purple><EM>field-definition</EM></FONT>s and <FONT COLOR=purple><EM>method-definition</EM></FONT>s.
-An AST path starts with the first element under the definition type. For
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>insert-typecast</B>&#X201D; <FONT COLOR=purple><EM>ast-path</EM></FONT>&#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>type-annotation</EM></FONT>* <FONT COLOR=purple><EM>type</EM></FONT> &#X201C;<B>\n</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>compound-type</EM></FONT>*
+</TD></TR>
+</TABLE><P>An AST path represents a traversal through the AST. AST paths can only be
+used in <FONT COLOR=purple><EM>field-definition</EM></FONT>s and <FONT COLOR=purple><EM>method-definition</EM></FONT>s.
+An AST path starts with the first element under the definition. For
 methods this is <TT>Block</TT> and for fields this is <TT>Variable</TT>.</P><P>An AST path is composed of one or more AST entries, separated by commas. Each
 AST entry is composed of a tree kind, a child selector, and an optional
 argument. An example AST entry is:</P><PRE CLASS="verbatim">Block.statement 1
@@ -458,7 +465,7 @@ public class ASTPathExample {
         }
     }
 }
-</PRE><P>The following is the ouput, with the casts inserted.</P><PRE CLASS="verbatim">package p;
+</PRE><P>The following is the output, with the casts inserted.</P><PRE CLASS="verbatim">package p;
 import p.A;
 
 public class ASTPathExample {
@@ -479,13 +486,8 @@ public class ASTPathExample {
         }
     }
 }
-</PRE><P>Note that two additional sets of parentheses are always added for each cast
-insertion: one set around the expression to be cast, and the other set around the
-cast and the expression. For example, a cast insertion looks like this:</P><PRE CLASS="verbatim">((\textit{cast type}) (\textit{original expression}))
-</PRE><P>This is to limit the cast to the entire expression, but
-nothing more. These parentheses may be unnecessary and can be removed by the
-programmer afterward. Also note that a cast can be inserted on any expression, not
-just the lowest expression in the AST. For example, a cast could be inserted on
+</PRE><P>Note that a cast can be inserted on any expression, not
+just the deepest expression in the AST. For example, a cast could be inserted on
 the expression <TT>i + j</TT>, the identifier <TT>i</TT>, and/or the identifier <TT>j</TT>.</P><P>To help create correct AST paths it may be useful to view the AST of a class.
 The Checker Framework has a processor to do this. The following command will
 output indented AST nodes for the entire input program.</P><PRE CLASS="verbatim">javac -processor checkers.util.debug.TreeDebug ASTPathExample.java
@@ -559,7 +561,7 @@ output indented AST nodes for the entire input program.</P><PRE CLASS="verbatim"
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>Catch</B>&#X201D; &#X201C;<B>.</B>&#X201D; ( &#X201C;<B>parameter</B>&#X201D; | &#X201C;<B>block</B>&#X201D; )</TD></TR>
 <TR><TD ALIGN=left NOWRAP></TD></TR>
 <TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>compound-assignment</EM></FONT> ::=</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>CompountAssignment</B>&#X201D; &#X201C;<B>.</B>&#X201D; ( &#X201C;<B>variable</B>&#X201D; | &#X201C;<B>expression</B>&#X201D; )</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>CompoundAssignment</B>&#X201D; &#X201C;<B>.</B>&#X201D; ( &#X201C;<B>variable</B>&#X201D; | &#X201C;<B>expression</B>&#X201D; )</TD></TR>
 <TR><TD ALIGN=left NOWRAP></TD></TR>
 <TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>conditional-expression</EM></FONT> ::=</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>ConditionalExpression</B>&#X201D; &#X201C;<B>.</B>&#X201D; ( &#X201C;<B>condition</B>&#X201D; | &#X201C;<B>trueExpression</B>&#X201D; | &#X201C;<B>falseExpression</B>&#X201D; )</TD></TR>
@@ -644,8 +646,107 @@ output indented AST nodes for the entire input program.</P><PRE CLASS="verbatim"
 <TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>wildcard</EM></FONT> ::=</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>Wildcard</B>&#X201D; &#X201C;<B>.</B>&#X201D; &#X201C;<B>bound</B>&#X201D;</TD></TR>
 <TR><TD ALIGN=left NOWRAP></TD></TR>
-</TABLE><!--TOC section Example-->
-<H2 CLASS="section"><!--SEC ANCHOR --><A NAME="htoc10">3</A>&#XA0;&#XA0;Example<A NAME="example"></A></H2><!--SEC END --><P>Consider the code of Figure&#XA0;<A HREF="#fig:java-example">1</A>.
+</TABLE><!--TOC subsection Annotations-->
+<H3 CLASS="subsection"><!--SEC ANCHOR --><A NAME="htoc6">2.4</A>&#XA0;&#XA0;Annotations<A NAME="annotations-grammar"></A></H3><!--SEC END --><P>This section describes the details of how annotations are defined, how
+annotations are used, and the different kinds of annotations in an annotation
+file.</P><!--TOC subsubsection Annotation definitions-->
+<H4 CLASS="subsubsection"><!--SEC ANCHOR -->2.4.1&#XA0;&#XA0;Annotation definitions<A NAME="annotation-definitions"></A></H4><!--SEC END --><P>An annotation definition describes the annotation&#X2019;s fields and their
+types, so that they may be referenced in a compact way throughout the
+annotation file. Any annotation that is used in an annotation file
+must be defined before use.
+(This requirement makes it impossible to define, in an
+annotation file, an annotation that is meta-annotated with itself.)
+The two exceptions to this rule are the <TT>@java.lang.annotation.Target</TT> and
+<TT>@java.lang.annotation.Retention</TT> meta-annotations. These meta-annotations
+are often used in annotation definitions so for ease of use are they not required to
+be defined themselves.
+In the annotation file, the annotation definition appears within the
+package that defines the annotation. The annotation may be applied to
+elements of any package.</P><P>Note that these annotation definitions should not be confused with the
+<TT>@interface</TT> syntax used in a Java source file to declare an annotation. An
+annotation definition in an annotation file is only used internally. An
+annotation definition in an annotation file will often mirror an
+<TT>@interface</TT> annotation declaration in a Java source file in order to use
+that annotation in an annotation file.</P><TABLE border=0 cellspacing=0 cellpadding=0><TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>annotation-definition</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The <FONT COLOR=purple><EM>decl-annotation</EM></FONT>s are the meta-annotations on this annotation.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>annotation</B>&#X201D; &#X201C;<B>@</B>&#X201D;<FONT COLOR=purple><EM>name</EM></FONT>
+&#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>decl-annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>annotation-field-definition</EM></FONT>*</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>annotation-field-definition</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>annotation-field-type</EM></FONT> <FONT COLOR=purple><EM>name</EM></FONT> &#X201C;<B>\n</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>annotation-field-type</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# <FONT COLOR=purple><EM>primitive-type</EM></FONT> is any Java primitive type (<TT>int</TT>, <TT>boolean</TT>, etc.).</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# These are described in detail in Section&#XA0;<A HREF="#types-and-values">4</A>.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;(<FONT COLOR=purple><EM>primitive-type</EM></FONT> | &#X201C;<B>String</B>&#X201D; | &#X201C;<B>Class</B>&#X201D;
+| (&#X201C;<B>enum</B>&#X201D; <FONT COLOR=purple><EM>name</EM></FONT>) | (&#X201C;<B>annotation-field</B>&#X201D; <FONT COLOR=purple><EM>name</EM></FONT>)) &#X201C;<B>[]</B>&#X201D;?</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| &#X201C;<B>unknown[]</B>&#X201D; &#X201C;<B>\n</B>&#X201D;</TD></TR>
+</TABLE><!--TOC subsubsection Annotation uses-->
+<H4 CLASS="subsubsection"><!--SEC ANCHOR -->2.4.2&#XA0;&#XA0;Annotation uses<A NAME="annotation-uses"></A></H4><!--SEC END --><P>Java SE 8 has two kinds of annotations: &#X201C;declaration annotations&#X201D; and &#X201C;type
+annotations&#X201D;. Declaration annotations can be written only on method formal
+parameters and the declarations of packages, classes, methods, fields, and local
+variables. Type annotations can be written on any use of a type, and on type
+parameter declarations. Type annotations must be meta-annotated
+with <TT>ElementType.TYPE_USE</TT> and/or <TT>ElementType.TYPE_PARAMETER</TT>.
+These meta-annotations are described in more detail in the JSR 308
+specification&#XA0;[<A HREF="#JSR308-webpage-201110">Ern11</A>].</P><P>The previous rules have used two productions for annotation uses in an
+annotation file: <FONT COLOR=purple><EM>decl-annotation</EM></FONT> and <FONT COLOR=purple><EM>type-annotation</EM></FONT>.
+The <FONT COLOR=purple><EM>decl-annotation</EM></FONT> and <FONT COLOR=purple><EM>type-annotation</EM></FONT> productions use the same
+syntax to specify an annotation. These two different rules exist only to show
+which type of annotation is valid in a given location. A declaration annotation
+must be used where the <FONT COLOR=purple><EM>decl-annotation</EM></FONT> production is used and a type
+annotation must be used where the <FONT COLOR=purple><EM>type-annotation</EM></FONT> production is used.</P><P>The syntax for an annotation is the same as in a Java source file.</P><TABLE border=0 cellspacing=0 cellpadding=0><TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>decl-annotation</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# <FONT COLOR=purple><EM>annotation</EM></FONT> must be a declaration annotation.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>annotation</EM></FONT></TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>type-annotation</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# <FONT COLOR=purple><EM>annotation</EM></FONT> must be a type annotation.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>annotation</EM></FONT></TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>annotation</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The name may be the annotation&#X2019;s simple name, unless the file</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# contains definitions for two annotations with the same simple name.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# In this case, the fully-qualified name of the annotation name is required.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>@</B>&#X201D;<FONT COLOR=purple><EM>name</EM></FONT> [ &#X201C;<B>(</B>&#X201D; <FONT COLOR=purple><EM>annotation-field</EM></FONT> [ &#X201C;<B>,</B>&#X201D; <FONT COLOR=purple><EM>annotation-field</EM></FONT> ]+ &#X201C;<B>)</B>&#X201D; ]</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>annotation-field</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# In Java, if a single-field annotation has a field named</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# &#X201C;<TT>value</TT>&#X201D;, then that field name may be elided in uses of the</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# annotation: &#X201C;<TT>@A(12)</TT>&#X201D; rather than &#X201C;<TT>@A(value=12)</TT>&#X201D;.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The same convention holds in an annotation file.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>name</EM></FONT> &#X201C;<B>=</B>&#X201D; <FONT COLOR=purple><EM>value</EM></FONT>
+</TD></TR>
+</TABLE><P>Certain Java elements allow both declaration and type annotations (for example,
+formal method parameters). For these elements, the <FONT COLOR=purple><EM>type-annotations</EM></FONT>
+rule is used to differentiate between the declaration annotations and the type
+annotations.</P><TABLE border=0 cellspacing=0 cellpadding=0><TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>type-annotations</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# holds the type annotations, as opposed to the declaration annotations.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>type:</B>&#X201D; <FONT COLOR=purple><EM>type-annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>compound-type</EM></FONT>*
+</TD></TR>
+</TABLE><!--TOC paragraph Compound type annotations-->
+<H5 CLASS="paragraph"><!--SEC ANCHOR -->Compound type annotations</H5><!--SEC END --><P>A compound type is a parameterized, wildcard, array, or nested type. Annotations
+may be on any type in a compound type. In order to specify the location of an
+annotation within a compound type we use a &#X201C;type path&#X201D;. A
+type path is composed one or more pairs of type kind and type argument index.</P><TABLE border=0 cellspacing=0 cellpadding=0><TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>type-kind</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>0</B>&#X201D; # annotation is deeper in this array type</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| &#X201C;<B>1</B>&#X201D; # annotation is deeper in this nested type</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| &#X201C;<B>2</B>&#X201D; # annotation is on the bound of this wildcard type argument</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| &#X201C;<B>3</B>&#X201D; # annotation is on the i&#X2019;th type argument of this parameterized type</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>type-path</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The <FONT COLOR=purple><EM>integer</EM></FONT> is the type argument index.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>type-kind</EM></FONT> &#X201C;<B>,</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> [ &#X201C;<B>,</B>&#X201D; <FONT COLOR=purple><EM>type-kind</EM></FONT> &#X201C;<B>,</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> ]*</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>compound-type</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>inner-type</B>&#X201D; <FONT COLOR=purple><EM>type-path</EM></FONT> &#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
+</TABLE><P>The type argument index used in the <FONT COLOR=purple><EM>type-path</EM></FONT> rule must be &#X201C;<B>0</B>&#X201D; unless the <FONT COLOR=purple><EM>type-kind</EM></FONT> is
+&#X201C;<B>3</B>&#X201D;. In this case, the type argument index selects which type argument
+of a parameterized type to use.</P><P>
+Type paths are explained in more detail, with many examples to ease
+understanding, in Section 3.4 of the JSR 308 Specification.<SUP><A NAME="text1" HREF="#note1">1</A></SUP></P><!--TOC section Example-->
+<H2 CLASS="section"><!--SEC ANCHOR --><A NAME="htoc7">3</A>&#XA0;&#XA0;Example<A NAME="example"></A></H2><!--SEC END --><P>Consider the code of Figure&#XA0;<A HREF="#fig:java-example">1</A>.
 Figure&#XA0;<A HREF="#fig:annotation-file-examples">2</A> shows two legal annotation files
 each of which represents its annotations.</P><BLOCKQUOTE CLASS="figure"><DIV CLASS="center"><HR WIDTH="80%" SIZE=2></DIV>
 <PRE CLASS="verbatim">package p1;
@@ -730,7 +831,7 @@ Figure&#XA0;<A HREF="#fig:java-example">1</A>.</TD></TR>
 </TABLE></DIV><P>
 <A NAME="fig:annotation-file-examples"></A>
 </P><DIV CLASS="center"><HR WIDTH="80%" SIZE=2></DIV></BLOCKQUOTE><!--TOC section Types and values-->
-<H2 CLASS="section"><!--SEC ANCHOR --><A NAME="htoc11">4</A>&#XA0;&#XA0;Types and values<A NAME="types-and-values"></A></H2><!--SEC END --><P>The Java language permits several types for annotation fields: primitives,
+<H2 CLASS="section"><!--SEC ANCHOR --><A NAME="htoc8">4</A>&#XA0;&#XA0;Types and values<A NAME="types-and-values"></A></H2><!--SEC END --><P>The Java language permits several types for annotation fields: primitives,
 <TT>String</TT>s, <TT>java.lang.Class</TT> tokens (possibly parameterized),
 enumeration constants, annotations, and one-dimensional arrays of these.</P><P>These <B>types</B> are represented in an annotation file as follows:
 </P><UL CLASS="itemize"><LI CLASS="li-itemize">
@@ -744,7 +845,7 @@ the enumeration class, such as <TT>enum java.lang.Thread$State</TT>.
 </LI><LI CLASS="li-itemize">Array: The representation of the element type followed by <TT>[]</TT>, such
 as <TT>String[]</TT>, with one exception: an annotation definition may specify
 a field type as <TT>unknown[]</TT> if, in all occurrences of that annotation in
-the annotation file, the field value is a zero-length array.<SUP><A NAME="text1" HREF="#note1">1</A></SUP>
+the annotation file, the field value is a zero-length array.<SUP><A NAME="text2" HREF="#note2">2</A></SUP>
 </LI></UL><P>Annotation field <B>values</B> are represented in an annotation file as follows:
 </P><UL CLASS="itemize"><LI CLASS="li-itemize">
 Numeric primitive value: literals as they would appear in Java source
@@ -800,7 +901,7 @@ class Foo: @p1.ClassInfo(
     )
 )
 </PRE><!--TOC section Alternative formats-->
-<H2 CLASS="section"><!--SEC ANCHOR --><A NAME="htoc12">5</A>&#XA0;&#XA0;Alternative formats<A NAME="alternative-formats"></A></H2><!--SEC END --><P>We mention two alternatives to the format described in this document.
+<H2 CLASS="section"><!--SEC ANCHOR --><A NAME="htoc9">5</A>&#XA0;&#XA0;Alternative formats<A NAME="alternative-formats"></A></H2><!--SEC END --><P>We mention multiple alternatives to the format described in this document.
 Each of them has its own merits.
 In the future, the other formats could be implemented, along with tools for
 converting among them.
@@ -823,18 +924,193 @@ Because it does not permit complete specification of a class&#X2019;s annotation
 (it does not permit annotation of method bodies), it is not appropriate for
 certain tools, such as type inference tools. However, it might be desirable
 to adopt such a format for public members, and to use the format
-described in this document primarily for method bodies.</P><!--TOC section References-->
+described in this document primarily for method bodies.</P><P>The Checker Framework&#XA0;[<A HREF="#DietlDEMS2011">DDE+11</A>, <A HREF="#CF">Che</A>] uses two additional formats for
+annotations. The first format is called &#X201C;stub files.&#X201D; A stub file is similar
+to the <TT>.spec</TT>/<TT>.jml</TT> files described in the previous paragraph. It
+uses Java syntax, only allows annotations on method headers and does not require
+method bodies. A stub file is used to add annotations to method headers of
+existing Java classes. For example, the Checker Framework uses stub files to add
+annotations to method headers of libraries (such as the JDK) without modifying
+the source code or bytecode of the library. A single stub file can contain
+multiple packages and classes. This format only allows annotations on method
+headers, not class headers, fields, and method bodies like in a <TT>.jaif</TT>
+file. Further, stub files are only used by the Checker Framework at runtime,
+they cannot be used to insert annotations into a source or classfile.</P><P>The Checker Framework also uses a format called an &#X201C;annotated JDK.&#X201D; The
+annotated JDK is a <TT>.jar</TT> file containing the JDK with annotations. It is
+created with the Annotation File Utilities, but the annotations are stored in a
+format similar to a stub file, instead of in a <TT>.jaif</TT> file. The annotated
+JDK starts with a source file for each file in the JDK to be annotated. Like a
+stub file, each source file only contains method headers with annotations. The
+annotated JDK also supports annotations in the class header. To build the
+annotated JDK <TT>.jar</TT> file, the source files are compiled, then the
+<TT>extract-annotations</TT> script is run on them to generate a <TT>.jaif</TT> file
+for each source file. The <TT>insert-annotations</TT> script then inserts the
+annotations contained in each <TT>.jaif</TT> file into the corresponding JDK class
+file. These are then packaged up into a single <TT>.jar</TT> file. Like a stub
+files, the annotated JDK is easier to read and write since it uses Java syntax.
+However, the annotated JDK requires a different file for each original Java
+source file. It does not allow annotations on fields and in method bodies. The
+annotated JDK also only contains annotations in the JDK and not other Java
+files.</P><!--TOC section Design and Implementation Details-->
+<H2 CLASS="section"><!--SEC ANCHOR --><A NAME="htoc10">6</A>&#XA0;&#XA0;Design and Implementation Details<A NAME="design-and-implementation-details"></A></H2><!--SEC END --><P>This section describes some high level-design and implementation details of the
+Annotation File Utilities, including the different components of the
+Annotation File Utilities and how they fit together. It is intended for someone
+who is beginning work on the Annotation File Utilities or is curious about how
+the Annotation File Utilities work.</P><P>The Annotation File Utilities is composed of three sub-projects:
+<TT>scene-lib</TT>, <TT>asmx</TT>, and <TT>annotation/file/utilities</TT>. The
+<TT>scene-lib</TT> sub-project represents a <TT>.jaif</TT> file. The
+<TT>asmx</TT> sub-project inserts and extracts annotations to/from
+bytecode. The <TT>annotation-file-utilities</TT> sub-project
+inserts annotations into source code.</P><!--TOC subsection <TT>scene-lib</TT>-->
+<H3 CLASS="subsection"><!--SEC ANCHOR --><A NAME="htoc11">6.1</A>&#XA0;&#XA0;<TT>scene-lib</TT><A NAME="scene-lib"></A></H3><!--SEC END --><P><TT>scene-lib</TT> is an interface to a <TT>.jaif</TT> file. It reads in and writes
+out <TT>.jaif</TT> files and provides an internal representation of a <TT>.jaif</TT>
+file to access and manipulate.</P><BLOCKQUOTE CLASS="figure"><DIV CLASS="center"><HR WIDTH="80%" SIZE=2></DIV>
+
+<DIV CLASS="center">
+<IMG SRC="scene-lib-type-hierarchy.png"></DIV>
+<DIV CLASS="caption"><TABLE CELLSPACING=6 CELLPADDING=0><TR><TD VALIGN=top ALIGN=left>Figure 3: The type hierarchy of the <TT>scene-lib</TT> classes used to represent a
+<TT>.jaif</TT> file.</TD></TR>
+</TABLE></DIV>
+<A NAME="fig:scene-lib-type-hierarchy"></A>
+<DIV CLASS="center"><HR WIDTH="80%" SIZE=2></DIV></BLOCKQUOTE><P>Internally, a <TT>.jaif</TT> file is represented by the
+scene-lib/src/annotations/el/AScene.java class. The <TT>AScene</TT> class (or
+&#X201C;annotated scene&#X201D;) roughly parallels the root of an abstract syntax tree. An
+<TT>AScene</TT> has a number of classes (<TT>AClass</TT>) as children. Each class
+has a number of methods (<TT>AMethod</TT>), fields (<TT>AElement</TT>), etc. as
+children. All of these classes are related in a type hierarchy
+(Figure&#XA0;<A HREF="#fig:scene-lib-type-hierarchy">3</A>). Note that this
+type hierarchy does not have a traditional &#X201C;is-a&#X201D; relationship between its
+classes. For example, it is not valid to say that a method is-a block, as the
+type hierarchy implies. In fact, it makes more sense to view the type hierarchy
+upside down, like so: a method contains a block, a block contains multiple
+expressions, and an expression contains an element. (Perhaps object composition
+would have been a better pattern to follow here.)</P><P>Each class in the type hierarchy has one or more fields to hold annotations for
+the different components of the class. For example, the <TT>AMethod</TT> class has
+the following fields: bounds, return type, receiver parameters, and throws
+clause. Each of these fields holds the annotations stored on that part of the
+method. For details on the remainder of the classes in the type hierarchy, and
+their respective fields, see the documentation for each file in
+scene-lib/src/annotations/el/.</P><P>An <TT>AScene</TT> instance can be created in two ways. An empty <TT>AScene</TT> can
+be created by calling the <TT>AScene</TT> constructor, or an <TT>AScene</TT> can be
+created by parsing an existing <TT>.jaif</TT> file. Once an <TT>AScene</TT> is
+created, annotations can be added to it by adding them to the correct fields of
+the children. An <TT>AScene</TT> can also be output to create a new <TT>.jaif</TT>
+file.</P><!--TOC subsection <TT>asmx</TT>-->
+<H3 CLASS="subsection"><!--SEC ANCHOR --><A NAME="htoc12">6.2</A>&#XA0;&#XA0;<TT>asmx</TT><A NAME="asmx"></A></H3><!--SEC END --><P>The <TT>asmx</TT> sub-project is used to insert and extract annotations from
+bytecode. <TT>asmx</TT> is based on an old version (2.2.2) of the ASM
+Framework&#XA0;[<A HREF="#ASM">ASM</A>]. It has been modified to allow it to read and write
+JSR 308&#XA0;[<A HREF="#JSR308-webpage-201110">Ern11</A>] annotations in bytecode. However, it is far behind the
+current ASM version (4.1). Experimental support for type annotations has been
+added to ASM for a future ASM 5 release. When ASM 5 is released, we should discard the custom
+<TT>asmx</TT> in the Annotation File Utilities and adapt the Annotation File Utilities to use the official, supported
+version of ASM.</P><!--TOC subsubsection Bytecode Insertion-->
+<H4 CLASS="subsubsection"><!--SEC ANCHOR -->6.2.1&#XA0;&#XA0;Bytecode Insertion<A NAME="bytecode-insertion"></A></H4><!--SEC END --><P>Annotations can be inserted into bytecode by executing the
+annotation-file-utilities/scripts/insert-annotations script. This script takes
+one or more &#X2329;class name, <TT>.jaif</TT> file&#X232A; pairs as arguments. The annotations
+specified in the <TT>.jaif</TT> file are inserted into the classfile directly
+before the <TT>.jaif</TT> file in the argument list.</P><P>First, each <TT>.jaif</TT> file is parsed into an <TT>AScene</TT> (as described in
+Section&#XA0;<A HREF="#scene-lib">6.1</A>). Then,
+asmx/src/org/objectweb/asm/ClassReader.java parses the classfile.
+As it is parsing the classfile, it passes the parsed bytecode off to the
+scene-lib/src/annotations/io/classfile/ClassAnnotationSceneWriter.java
+class. This class has a reference to the <TT>AScene</TT> parsed from the
+<TT>.jaif</TT> file. As this class receives the parsed bytecode it inserts the relevant
+annotations from the <TT>AScene</TT> in the bytecode and then
+writes the bytecode back out.</P><!--TOC subsubsection Bytecode Extraction-->
+<H4 CLASS="subsubsection"><!--SEC ANCHOR -->6.2.2&#XA0;&#XA0;Bytecode Extraction<A NAME="bytecode-extraction"></A></H4><!--SEC END --><P>Annotations can be extracted from bytecode by executing the
+annotation-file-utilities/scripts/extract-annotations script. This script
+takes one or more class names as arguments and outputs the annotations found in
+those classes to <TT>.jaif</TT> files.</P><P>First, an empty <TT>AScene</TT> is constructed to store the annotations.
+asmx/src/org/objectweb/asm/ClassReader.java parses the classfile
+and passes the parsed bytecode off to the
+scene-lib/src/annotations/io/classfile/ClassAnnotationSceneReader.java
+class. This class filters out the annotations in the bytecode and adds them to
+the correct part of the <TT>AScene</TT>. After this, the <TT>AScene</TT> is output
+to a <TT>.jaif</TT> file.</P><!--TOC subsection <TT>annotation-file-utilities</TT>-->
+<H3 CLASS="subsection"><!--SEC ANCHOR --><A NAME="htoc13">6.3</A>&#XA0;&#XA0;<TT>annotation-file-utilities</TT><A NAME="annotation-file-utilities"></A></H3><!--SEC END --><P>The <TT>annotation-file-utilities</TT> sub-project inserts annotations into source
+code. It can be run by executing the
+annotation-file-utilities/scripts/insert-annotations-to-source script.
+The script takes one or more <TT>.jaif</TT> files, followed by one or more
+<TT>.java</TT> source files as arguments. The annotations in the <TT>.jaif</TT>
+files are inserted into the <TT>.java</TT> source files.</P><P>First, an instance of
+annotation-file-utilities/src/annotator/specification/IndexFileSpecification.java
+is created. Its <TT>parse</TT> method parses the <TT>.jaif</TT>
+file into an <TT>AScene</TT> (as described in Section&#XA0;<A HREF="#scene-lib">6.1</A>).
+The <TT>parse</TT> method calls the <TT>parseScene</TT> method, which
+traverses through the <TT>AScene</TT> and creates an
+annotation-file-utilities/src/annotator/specification/CriterionList.java.
+A <TT>CriterionList</TT> identifies a unique AST node that is the location of an
+insertion. It contains objects that implement the
+annotation-file-utilities/src/annotator/find/Criterion.java interface.
+Each <TT>Criterion</TT> has an <TT>isSatisifiedBy</TT> method &#X2014; a predicate that
+takes an AST node and returns <TT>true</TT> if the AST node satisifies the
+<TT>Criterion</TT> and <TT>false</TT> otherwise. To determine if a given node
+matches a <TT>CriterionList</TT>, the node is passed to all of the
+<TT>Criterion</TT>s in the <TT>CriteriaList</TT>. If every <TT>Criterion</TT> returns
+<TT>true</TT> then it is match. If one or more <TT>Criterion</TT>s return
+<TT>false</TT> then it is not a match.
+The various <TT>Criterion</TT> classes are in the
+annotation-file-utilities/src/annotator/find/ directory.
+For example, take the following
+source code:</P><PRE CLASS="verbatim">package afu.example;
+
+public class Test {
+    public void m(boolean b, int i) {
+      // ...
+    }
+}
+</PRE><P>The <TT>CriterionList</TT> to specify the location of the <TT>i</TT> parameter
+contains the following <TT>Criterion</TT>s:</P><UL CLASS="itemize"><LI CLASS="li-itemize">
+<TT>InPackageCriterion("afu.example")</TT>
+</LI><LI CLASS="li-itemize"><TT>InClassCriterion("Test")</TT>
+</LI><LI CLASS="li-itemize"><TT>InMethodCriterion("m(ZI)V")</TT>
+</LI><LI CLASS="li-itemize"><TT>ParamCriterion(1)</TT>
+</LI></UL><P>After this <TT>CriterionList</TT> is built up an
+annotation-file-utilities/src/annotator/find/Insertion.java is created.
+An <TT>Insertion</TT> stores an
+annotation-file-utilities/src/annotator/find/Criteria.java (which is created
+from a <TT>CriterionList</TT>) and the text to be inserted. All of these
+<TT>Insertion</TT>s are then added to a list. The Java compiler then is called to
+parse the Java source into an abstract syntax tree. This is followed by a call
+to the <TT>getPositions</TT> method of
+annotation-file-utilities/src/annotator/find/TreeFinder.java, which scans
+through each node of the abstract syntax trees. For each node, it runs through
+the <TT>Criteria</TT> for each un-matched <TT>Insertion</TT>. If at least one of the
+<TT>Criteria</TT> does not match, then this is not the correct place for the
+<TT>Insertion</TT> and the <TT>Insertion</TT> will be checked at the remaining nodes
+of the tree. If all of the <TT>Criteria</TT> match, then this node is the correct
+place for the <TT>Insertion</TT>. It is removed from the list of un-matched
+<TT>Insertion</TT>s and the position where to insert the <TT>Insertion</TT> is
+determined. This position is the integer index in the file where the
+<TT>Insertion</TT> should be inserted. After the positions are found for all of
+the <TT>Insertion</TT>s, the <TT>Insertion</TT> text is inserted into the file. This
+happens backwards, with <TT>Insertion</TT>s at the end of the file (i.e. with
+higher positions) being inserted first. If <TT>Insertion</TT>s were instead
+inserted from the beginning of the file then a single <TT>Insertion</TT> would
+invalidate all of the positions for the following <TT>Insertion</TT>s.</P><P>If there are remaining <TT>Insertion</TT>s that were not matched to a node in the
+abstract syntax tree then an error message is displayed.</P><!--TOC section References-->
 <H2 CLASS="section"><!--SEC ANCHOR -->References</H2><!--SEC END --><DL CLASS="thebibliography"><DT CLASS="dt-thebibliography">
-<A NAME="JSR308"><FONT COLOR=purple>[Ern08]</FONT></A></DT><DD CLASS="dd-thebibliography">
+<A NAME="ASM"><FONT COLOR=purple>[ASM]</FONT></A></DT><DD CLASS="dd-thebibliography">
+ASM website.
+<A HREF="http://asm.ow2.org/"><TT>http://asm.ow2.org/</TT></A>.</DD><DT CLASS="dt-thebibliography"><A NAME="CF"><FONT COLOR=purple>[Che]</FONT></A></DT><DD CLASS="dd-thebibliography">
+Checker Framework website.
+<A HREF="http://types.cs.washington.edu/checker-framework/"><TT>http://types.cs.washington.edu/checker-framework/</TT></A>.</DD><DT CLASS="dt-thebibliography"><A NAME="DietlDEMS2011"><FONT COLOR=purple>[DDE</FONT><SUP><FONT COLOR=purple>+</FONT></SUP><FONT COLOR=purple>11]</FONT></A></DT><DD CLASS="dd-thebibliography">
+Werner Dietl, Stephanie Dietzel, Michael&#XA0;D. Ernst, Kivan&#XE7; Mu&#X15F;lu,
+and Todd Schiller.
+Building and using pluggable type-checkers.
+In <EM>ICSE&#X2019;11, Proceedings of the 33rd International Conference on
+Software Engineering</EM>, pages 681&#X2013;690, Waikiki, Hawaii, USA, May&#XA0;25&#X2013;27,
+2011.</DD><DT CLASS="dt-thebibliography"><A NAME="JSR308-webpage-201110"><FONT COLOR=purple>[Ern11]</FONT></A></DT><DD CLASS="dd-thebibliography">
 Michael&#XA0;D. Ernst.
 Type Annotations specification (JSR 308).
-<A HREF="http://types.cs.washington.edu/jsr308/"><TT>http://types.cs.washington.edu/jsr308/</TT></A>, September&#XA0;12, 2008.</DD><DT CLASS="dt-thebibliography"><A NAME="LeavensBR2006:JML"><FONT COLOR=purple>[LBR06]</FONT></A></DT><DD CLASS="dd-thebibliography">
+<A HREF="http://types.cs.washington.edu/jsr308/"><TT>http://types.cs.washington.edu/jsr308/</TT></A>, October 2011.</DD><DT CLASS="dt-thebibliography"><A NAME="LeavensBR2006:JML"><FONT COLOR=purple>[LBR06]</FONT></A></DT><DD CLASS="dd-thebibliography">
 Gary&#XA0;T. Leavens, Albert&#XA0;L. Baker, and Clyde Ruby.
 Preliminary design of JML: A behavioral interface specification
 language for Java.
 <EM>ACM SIGSOFT Software Engineering Notes</EM>, 31(3), March 2006.</DD></DL><!--BEGIN NOTES document-->
 <HR CLASS="footnoterule"><DL CLASS="thefootnotes"><DT CLASS="dt-thefootnotes">
-<A NAME="note1" HREF="#text1">1</A></DT><DD CLASS="dd-thefootnotes">There is a design flaw in the format of array field values in a
+<A NAME="note1" HREF="#text1">1</A></DT><DD CLASS="dd-thefootnotes"><A HREF="http://types.cs.washington.edu/jsr308/specification/java-annotation-design.html#class-file:ext:type_path"><TT>http://types.cs.washington.edu/jsr308/specification/java-annotation-design.html#class-file:ext:type_path</TT></A>
+</DD><DT CLASS="dt-thefootnotes"><A NAME="note2" HREF="#text2">2</A></DT><DD CLASS="dd-thefootnotes">There is a design flaw in the format of array field values in a
 class file. An array does not itself specify an element type; instead, each
 element specifies its type. If the annotation type <TT>X</TT> has an array field
 <TT>arr</TT> but <TT>arr</TT> is zero-length in every <TT>@X</TT> annotation in the

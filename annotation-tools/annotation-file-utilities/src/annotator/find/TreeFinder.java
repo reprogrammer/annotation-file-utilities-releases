@@ -12,8 +12,6 @@ import javax.lang.model.element.Modifier;
 import javax.tools.JavaFileObject;
 
 import plume.Pair;
-import type.ArrayType;
-import type.BoundedType;
 import type.DeclaredType;
 import type.Type;
 import annotator.Main;
@@ -342,36 +340,14 @@ public class TreeFinder extends TreeScanner<Void, List<Insertion>> {
     @Override
     public Integer visitPrimitiveType(PrimitiveTypeTree node, Insertion ins) {
       debug("TypePositionFinder.visitPrimitiveType(%s)", node);
-      // want exact same logistics as with visitIdentifier
-      Tree parent = parent(node);
-      Integer i = null;
-      if (parent.getKind() == Tree.Kind.ARRAY_TYPE) { // ArrayTypeTree
-        // ArrayTypeTree att = (ArrayTypeTree) parent;
-        JCTree jcid = (JCTree) node;
-        i = jcid.pos;
-      } else {
-        i = ((JCTree) node).pos;
-      }
-      //          JCPrimitiveTypeTree pt = (JCPrimitiveTypeTree) node;
-      // JCTree jt = (JCTree) node;
-      return i;
+      return ((JCTree) node).pos;
     }
 
     @Override
       public Integer visitParameterizedType(ParameterizedTypeTree node, Insertion ins) {
       Tree parent = parent(node);
       debug("TypePositionFinder.visitParameterizedType %s parent=%s%n", node, parent);
-      Integer i = null;
-      if (parent.getKind() == Tree.Kind.ARRAY_TYPE) { // ArrayTypeTree
-        // want to annotate the first level of this array
-        ArrayTypeTree att = (ArrayTypeTree) parent;
-        Tree baseType = att.getType();
-        i = leftmostIdentifier(((JCTypeApply) node).getType()).pos;
-        debug("BASE TYPE: " + baseType.toString());
-      } else {
-        i = leftmostIdentifier(((JCTypeApply)node).getType()).pos;
-      }
-      return i;
+      return leftmostIdentifier(((JCTypeApply) node).getType()).pos;
     }
 
 //     @Override
@@ -733,15 +709,12 @@ public class TreeFinder extends TreeScanner<Void, List<Insertion>> {
       if (cd.mods != null
           && (cd.mods.flags != 0 || cd.mods.annotations.size() > 0)) {
         result = cd.mods.getPreferredPosition();
-        assert result >= 0
-          : String.format("%d %d %d%n", cd.getStartPosition(),
-                          cd.getPreferredPosition(), cd.pos);
       } else {
         result = cd.getPreferredPosition();
-        assert result >= 0
-          : String.format("%d %d %d%n", cd.getStartPosition(),
-                          cd.getPreferredPosition(), cd.pos);
       }
+      assert result >= 0
+        : String.format("%d %d %d%n", cd.getStartPosition(),
+                        cd.getPreferredPosition(), cd.pos);
       return result;
     }
 
@@ -887,68 +860,11 @@ public class TreeFinder extends TreeScanner<Void, List<Insertion>> {
           continue;
         }
 
-        // Don't insert a duplicate if this particular annotation is already
-        // present at this location.
-        List<? extends AnnotationTree> alreadyPresent = null;
-        if (path != null) {
-          for (Tree n : path) {
-            if (n.getKind() == Tree.Kind.CLASS) { // ClassTree
-              alreadyPresent = ((ClassTree) n).getModifiers().getAnnotations();
-              break;
-            } else if (n.getKind() == Tree.Kind.METHOD) { // MethodTree
-              alreadyPresent = ((MethodTree) n).getModifiers().getAnnotations();
-              break;
-            } else if (n.getKind() == Tree.Kind.VARIABLE) { // VariableTree
-              alreadyPresent = ((VariableTree) n).getModifiers().getAnnotations();
-              break;
-            } else if (n.getKind() == Tree.Kind.TYPE_CAST) { // TypeCastTree
-              Tree type = ((TypeCastTree) n).getType();
-              if (type.getKind() == Tree.Kind.ANNOTATED_TYPE) { // AnnotatedTypeTree
-                alreadyPresent = ((AnnotatedTypeTree) type).getAnnotations();
-              }
-              break;
-            } else if (n.getKind() == Tree.Kind.INSTANCE_OF) { // InstanceOfTree
-              Tree type = ((InstanceOfTree) n).getType();
-              if (type.getKind() == Tree.Kind.ANNOTATED_TYPE) { // AnnotatedTypeTree
-                alreadyPresent = ((AnnotatedTypeTree) type).getAnnotations();
-              }
-              break;
-            } else if (n.getKind() == Tree.Kind.NEW_CLASS) { // NewClassTree
-              JCNewClass nc = (JCNewClass) n;
-              if (nc.clazz.getKind() == Tree.Kind.ANNOTATED_TYPE) { // AnnotatedTypeTree
-                alreadyPresent = ((AnnotatedTypeTree) nc.clazz).getAnnotations();
-              }
-              break;
-            } else if (n.getKind() == Tree.Kind.PARAMETERIZED_TYPE) { // ParameterizedTypeTree
-                // If we pass through a parameterized type, stop, otherwise we
-                // mix up annotations on the outer type.
-                // TODO: is something similar needed for Arrays?
-                break;
-            }
-            // TODO: don't add cast insertion if it's already present.
-          }
-        }
-        // System.out.printf("alreadyPresent = %s for %s of kind %s%n", alreadyPresent, node, node.getKind());
-        // printPath(path);
-        if (alreadyPresent != null) {
-          for (AnnotationTree at : alreadyPresent) {
-            // Compare the to-be-inserted annotation to the existing
-            // annotation, ignoring its arguments (duplicate annotations are
-            // never allowed even if they differ in arguments).  If we did
-            // have to compare our arguments, we'd have to deal with enum
-            // arguments potentially being fully qualified or not:
-            // @Retention(java.lang.annotation.RetentionPolicy.CLASS) vs
-            // @Retention(RetentionPolicy.CLASS)
-            String ann = at.getAnnotationType().toString();
-            String iann = Main.removeArgs(i.getText()).a.substring(1); // strip off the leading @
-            String iannNoPackage = Insertion.removePackage(iann).b;
-            // System.out.printf("Comparing: %s %s %s%n", ann, iann, iannNoPackage);
-            if (ann.equals(iann) || ann.equals(iannNoPackage)) {
-              debug("Already present, not reinserting: %s%n", ann);
-              it.remove();
-              return super.scan(node, p);
-            }
-          }
+        if (alreadyPresent(path, i)) {
+          // Don't insert a duplicate if this particular annotation is already
+          // present at this location.
+          it.remove();
+          continue;
         }
 
         if (i.getKind() == Insertion.Kind.RECEIVER && node.getKind() == Tree.Kind.METHOD) {
@@ -956,7 +872,7 @@ public class TreeFinder extends TreeScanner<Void, List<Insertion>> {
           MethodTree method = (MethodTree) node;
 
           if (method.getReceiverParameter() == null) {
-            makeReceiver(path, receiver, method);
+            addReceiverType(path, receiver, method);
           }
         }
 
@@ -973,27 +889,18 @@ public class TreeFinder extends TreeScanner<Void, List<Insertion>> {
           pos = tpf.scan(((MethodTree)node).getReturnType(), i);
           assert handled(node);
           debug("pos = %d at return type node: %s%n", pos, ((JCMethodDecl)node).getReturnType().getClass());
-        } else if ((node.getKind() == Tree.Kind.TYPE_PARAMETER) // TypeParameterTree
-                   && (i.getCriteria().onBoundZero())
-                   && ((TypeParameterTree) node).getBounds().isEmpty()) {
+        } else if (((node.getKind() == Tree.Kind.TYPE_PARAMETER)
+                    && (i.getCriteria().onBoundZero())
+                    && ((TypeParameterTree) node).getBounds().isEmpty())
+                || ((node instanceof WildcardTree)
+                    && ((WildcardTree) node).getBound() == null
+                    && wildcardLast(i.getCriteria().getGenericArrayLocation().getLocation()))) {
             pos = tpf.scan(node, i);
 
             Integer nextpos1 = getFirstInstanceAfter(',', pos+1, tree);
             Integer nextpos2 = getFirstInstanceAfter('>', pos+1, tree);
             pos = (nextpos1!=-1 && nextpos1 < nextpos2) ? nextpos1 : nextpos2;
 
-            // need to add "extends ... Object" around the type annotation
-            i = new TypeBoundExtendsInsertion(i.getText(), i.getCriteria(), i.getSeparateLine());
-        } else if ((node instanceof WildcardTree) // Easier than listing three tree kinds. Correct?
-                 && ((WildcardTree)node).getBound()==null
-                 && wildcardLast(i.getCriteria().getGenericArrayLocation().getLocation())) {
-            pos = tpf.scan(node, i);
-
-            Integer nextpos1 = getFirstInstanceAfter(',', pos+1, tree);
-            Integer nextpos2 = getFirstInstanceAfter('>', pos+1, tree);
-            pos = (nextpos1!=-1 && nextpos1 < nextpos2) ? nextpos1 : nextpos2;
-
-            // need to add "extends ... Object" around the type annotation
             i = new TypeBoundExtendsInsertion(i.getText(), i.getCriteria(), i.getSeparateLine());
         } else if (i.getKind() == Insertion.Kind.CAST) {
             JCTree jcTree = (JCTree) node;
@@ -1040,6 +947,79 @@ public class TreeFinder extends TreeScanner<Void, List<Insertion>> {
   }
 
   /**
+   * Determines if the annotation in the given insertion is already present
+   * at the given location in the AST.
+   *
+   * @param path The location in the AST to check for the annotation.
+   * @param ins The annotation to check for.
+   * @return {@code true} if the given annotation is already at the given
+   *         location in the AST, {@code false} otherwise.
+   */
+  private boolean alreadyPresent(TreePath path, Insertion ins) {
+    List<? extends AnnotationTree> alreadyPresent = null;
+    if (path != null) {
+      for (Tree n : path) {
+        if (n.getKind() == Tree.Kind.CLASS) {
+          alreadyPresent = ((ClassTree) n).getModifiers().getAnnotations();
+          break;
+        } else if (n.getKind() == Tree.Kind.METHOD) {
+          alreadyPresent = ((MethodTree) n).getModifiers().getAnnotations();
+          break;
+        } else if (n.getKind() == Tree.Kind.VARIABLE) {
+          alreadyPresent = ((VariableTree) n).getModifiers().getAnnotations();
+          break;
+        } else if (n.getKind() == Tree.Kind.TYPE_CAST) {
+          Tree type = ((TypeCastTree) n).getType();
+          if (type.getKind() == Tree.Kind.ANNOTATED_TYPE) {
+            alreadyPresent = ((AnnotatedTypeTree) type).getAnnotations();
+          }
+          break;
+        } else if (n.getKind() == Tree.Kind.INSTANCE_OF) {
+          Tree type = ((InstanceOfTree) n).getType();
+          if (type.getKind() == Tree.Kind.ANNOTATED_TYPE) {
+            alreadyPresent = ((AnnotatedTypeTree) type).getAnnotations();
+          }
+          break;
+        } else if (n.getKind() == Tree.Kind.NEW_CLASS) {
+          JCNewClass nc = (JCNewClass) n;
+          if (nc.clazz.getKind() == Tree.Kind.ANNOTATED_TYPE) {
+            alreadyPresent = ((AnnotatedTypeTree) nc.clazz).getAnnotations();
+          }
+          break;
+        } else if (n.getKind() == Tree.Kind.PARAMETERIZED_TYPE) {
+          // If we pass through a parameterized type, stop, otherwise we
+          // mix up annotations on the outer type.
+          // TODO: is something similar needed for Arrays?
+          break;
+        }
+        // TODO: don't add cast insertion if it's already present.
+      }
+    }
+    // System.out.printf("alreadyPresent = %s for %s of kind %s%n", alreadyPresent, node, node.getKind());
+    // printPath(path);
+    if (alreadyPresent != null) {
+      for (AnnotationTree at : alreadyPresent) {
+        // Compare the to-be-inserted annotation to the existing
+        // annotation, ignoring its arguments (duplicate annotations are
+        // never allowed even if they differ in arguments).  If we did
+        // have to compare our arguments, we'd have to deal with enum
+        // arguments potentially being fully qualified or not:
+        // @Retention(java.lang.annotation.RetentionPolicy.CLASS) vs
+        // @Retention(RetentionPolicy.CLASS)
+        String ann = at.getAnnotationType().toString();
+        String iann = Main.removeArgs(ins.getText()).a.substring(1); // strip off the leading @
+        String iannNoPackage = Insertion.removePackage(iann).b;
+        // System.out.printf("Comparing: %s %s %s%n", ann, iann, iannNoPackage);
+        if (ann.equals(iann) || ann.equals(iannNoPackage)) {
+          debug("Already present, not reinserting: %s%n", ann);
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
    * Reports an error inserting an insertion to {@code System.err}.
    * @param i The insertion that caused the error.
    * @param e The error. If there's a message it will be printed.
@@ -1051,22 +1031,26 @@ public class TreeFinder extends TreeScanner<Void, List<Insertion>> {
       // If the message has multiple lines, indent them so it's easier to read.
       System.err.println("\tError: " + e.getMessage().replace("\n", "\n\t\t"));
     }
-    if (debug) {
+    if (debug || Main.print_error_stack) {
       e.printStackTrace();
+    } else {
+      System.err.println("\tRun with --print_error_stack to see the stack trace.");
     }
     System.err.println("\tThis insertion will be skipped.");
   }
 
   /**
-   * Creates a method declaration receiver parameter and inserts the receiver
-   * annotation in the correct place. This is for receiver insertions where a
-   * receiver does not already exist.
+   * Modifies the given receiver insertion so that it contains the type
+   * information necessary to insert a full method declaration receiver
+   * parameter. This is for receiver insertions where a receiver does not
+   * already exist in the source code. This will also add the annotations to be
+   * inserted to the correct part of the receiver type.
    *
    * @param path The location in the AST to insert the receiver.
    * @param receiver Details of the receiver to insert.
    * @param method The method the receiver is being inserted into.
    */
-  private void makeReceiver(TreePath path, ReceiverInsertion receiver,
+  private void addReceiverType(TreePath path, ReceiverInsertion receiver,
       MethodTree method) {
     // Find the name of the class
     // with type parameters to create the receiver. Walk up the tree and
@@ -1132,83 +1116,8 @@ public class TreeFinder extends TreeScanner<Void, List<Insertion>> {
       outerType.setAnnotations(innerTypes.getAnnotations());
     }
 
-    // Now insert the inner type annotations.
-    for (Insertion innerInsertion : receiver.getInnerTypeInsertions()) {
-      // Set each annotation as inserted (even if it doesn't actually get
-      // inserted because of an error) to "disable" the insertion in the global
-      // insertion list.
-      innerInsertion.setInserted(true);
-
-      try {
-        if (innerInsertion.getKind() != Insertion.Kind.ANNOTATION) {
-          throw new RuntimeException("Expected 'ANNOTATION' insertion kind, got '"
-                  + innerInsertion.getKind() + "'.");
-        }
-        GenericArrayLocationCriterion c = innerInsertion.getCriteria().getGenericArrayLocation();
-        if (c == null) {
-          throw new RuntimeException("Missing type path.");
-        }
-
-        List<TypePathEntry> location = c.getLocation();
-        Type type = (staticType == null) ? outerType : staticType;
-
-        // Use the type path entries to traverse through the type. Throw an
-        // exception and move on to the next inner type insertion if the type
-        // path and actual type don't match up.
-        for (TypePathEntry tpe : location) {
-          switch (tpe.tag) {
-          case ARRAY:
-            if (type.getKind() == Type.Kind.ARRAY) {
-              type = ((ArrayType) type).getComponentType();
-            } else {
-              throw new RuntimeException("Incorrect type path.");
-            }
-            break;
-          case INNER_TYPE:
-            if (type.getKind() == Type.Kind.DECLARED) {
-              DeclaredType declaredType = (DeclaredType) type;
-              if (declaredType.getInnerType() == null) {
-                throw new RuntimeException("Incorrect type path: "
-                    + "expected inner type but none exists.");
-              }
-              type = declaredType.getInnerType();
-            } else {
-              throw new RuntimeException("Incorrect type path.");
-            }
-            break;
-          case WILDCARD:
-            if (type.getKind() == Type.Kind.BOUNDED) {
-              BoundedType boundedType = (BoundedType) type;
-              if (boundedType.getBound() == null) {
-                throw new RuntimeException("Incorrect type path: "
-                    + "expected type bound but none exists.");
-              }
-              type = boundedType.getBound();
-            } else {
-              throw new RuntimeException("Incorrect type path.");
-            }
-            break;
-          case TYPE_ARGUMENT:
-            if (type.getKind() == Type.Kind.DECLARED) {
-              DeclaredType declaredType = (DeclaredType) type;
-              if (0 <= tpe.arg && tpe.arg < declaredType.getTypeParameters().size()) {
-                type = ((DeclaredType) type).getTypeParameter(tpe.arg);
-              } else {
-                throw new RuntimeException("Incorrect type argument index: " + tpe.arg);
-              }
-            } else {
-              throw new RuntimeException("Incorrect type path.");
-            }
-            break;
-          default:
-            throw new RuntimeException("Illegal TypePathEntryKind: " + tpe.tag);
-          }
-        }
-        type.addAnnotation(((AnnotationInsertion) innerInsertion).getAnnotation());
-      } catch (Throwable e) {
-        reportInsertionError(innerInsertion, e);
-      }
-    }
+    Type type = (staticType == null) ? outerType : staticType;
+    Insertion.decorateType(receiver.getInnerTypeInsertions(), type);
 
     // If the method doesn't have parameters, don't add a comma.
     receiver.setAddComma(method.getParameters().size() > 0);

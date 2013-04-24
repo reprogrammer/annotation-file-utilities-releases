@@ -68,7 +68,7 @@ and it also motivates reasons why such a file format is necessary in
 addition to the <code>.java</code> and <code>.class</code> formats.  The
 file format supports both the declaration annotations introduced in Java 5, and also the
 <a href="http://types.cs.washington.edu/jsr308/">type annotations</a> that
-will appear in a forthcoming version of Java.
+will appear in Java 8.
 </p>
 
 <p>
@@ -100,6 +100,14 @@ to read and write annotation files.
 </ul>
 
 <p>
+A diagram showing the interactions betweeen these tools is below.
+</p>
+
+<div>
+<img src="figures/tool-relations.png" />
+</div>
+
+<p>
 There is no
 <code>extract-annotations-from-source</code> tool:  one can
 compile the source code and then use
@@ -117,7 +125,7 @@ The following instructions assume either a Linux or Windows system using a comma
 
 <p>
 The current distribution is <code>Annotation File Utilities version
-3.5.1</code>, released March 1, 2013.
+<!-- afu-version -->3.5.1, 1 March 2013<!-- /afu-version -->.</code>
 </p>
 
 <ol>
@@ -134,7 +142,7 @@ The current distribution is <code>Annotation File Utilities version
 
   <pre><code>unzip annotation-tools.zip</code></pre>
 
-  The <code>annotation-tools</code> directory must be in the same directory as the <code>jsr308-langtools</code>
+  The <code>annotation-tools</code> directory must be in the parent directory (for example, in <code>~/jsr308/</code>) of the <code>jsr308-langtools</code>
   directory (available at <a href="http://types.cs.washington.edu/jsr308/">http://types.cs.washington.edu/jsr308/</a>).
   Alternatively, Unix (including Linux and MacOS) users may set the <code>LANGTOOLS</code> environment variable to
   the location of the <code>jsr308-langtools</code> directory:
@@ -143,7 +151,7 @@ The current distribution is <code>Annotation File Utilities version
 </li>
 
 <li>
-Add the annotation-file-utilities directory to your path.
+Add the <code>annotation-file-utilities</code> directory to your path.
 
 <ul>
 <li>
@@ -163,8 +171,8 @@ variable by going to
 
 <pre><code> Control Panel -> System -> Advanced -> Environment Variables </code></pre>
 
-From there, find the <code> PATH </code> variable under &ldquo;System variables&rdquo;
-and append to it the directory containing all the tools.
+From there, find the <code>PATH</code> variable under &ldquo;System variables&rdquo;
+and append to it the directory <code><em>path\to</em>\annotatation-tools\annotation-file-utilities\scripts</code>.
 </li>
 </ul>
 </li>
@@ -289,6 +297,22 @@ You can insert annotations on class/field/method declarations and
 signatures without the class on your classpath.
 </p>
 
+<p>
+Your source code needs to contain the locations that your
+<code>.jaif</code> file references.  In particular, if the
+<code>.jaif</code> file contains annotations for a type parameter, but the
+source code uses a raw type, then you will get an error such as
+</p>
+<pre>
+Found class Edge, but unable to insert @checkers.nullness.quals.Nullable:
+  @checkers.nullness.quals.Nullable (nl=true) @ [GenericArrayLocationCriterion at ( [TYPE_ARGUMENT(0)] ), ...
+</pre>
+<p>
+In this case, you should add type arguments, such as changing
+</p>
+<pre>  public void pushNonezeroRing(Stack stack, Hashtable seen) {</pre>
+<p>to</p>
+<pre>  public void pushNonezeroRing(Stack&lt;Edge&gt; stack, Hashtable&lt;Edge, ?&gt; seen) {</pre>
 
 
 <hr />
@@ -321,24 +345,11 @@ The <a href="changelog.html">changelog</a> describes what is new in each release
 <hr/>
 
 <p>
-Last revised: March 1, 2013
+Last revised: <!-- afu-date -->March 9, 2013<!-- /afu-date-->
 </p>
 
 </body>
 </html>
-
-<!--
-  This makes Emacs update the "Last revised" paragraph above every time
-  you save the file.
--->
-<!--
-Local Variables:
-time-stamp-start: "^Last revised: "
-time-stamp-end: "\\.?$"
-time-stamp-format: "%:b %:d, %:y"
-time-stamp-line-limit: -30
-End:
--->
 
 <!--  LocalWords:  utils bashrc tcsh tcshrc cshrc classpath
  -->
