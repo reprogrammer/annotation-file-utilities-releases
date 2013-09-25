@@ -62,11 +62,13 @@ compile :
 .PRECIOUS : bin/annotator/tests/%.class
 bin/annotator/tests/%.class: %.java
 	mkdir -p bin
-	$(XJAVAC) -g -cp bin:../bin -d bin -sourcepath . $*.java
+# Added "-Xlint:-options" to see if it permits Jenkins job to succeed, due to
+# problem "target value 1.8 is obsolete and will be removed in a future release"
+	$(XJAVAC) -Xlint:-options -g -cp bin:../bin -d bin -sourcepath . $*.java
 
 # Actually runs the annotator to create the annotated java file.
 # We are required to put annotation-file-utilities.jar (and ../bin) on the
-# bootclasspath so that the jsr308 javac classes bundled therein are found
+# bootclasspath so that the JSR 308 javac classes bundled therein are found
 # before the stock javac classes that the Mac OS includes on the bootclasspath
 # (other platforms do not make such inclusions)
 .PRECIOUS: %.output

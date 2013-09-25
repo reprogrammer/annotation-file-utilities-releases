@@ -209,6 +209,13 @@ public class IsSigMethodCriterion implements Criterion {
       }
     }
 
+    /*
+     * From Java 7 language definition 6.5.5.2 (Qualified Types):
+     * If a type name is of the form Q.Id, then Q must be either a type
+     * name or a package name.  If Id names exactly one accessible type
+     * that is a member of the type or package denoted by Q, then the
+     * qualified type name denotes that type.
+     */
     if (!matchable) {
       // match with any of the imports
       for (String someImport : context.imports) {
@@ -230,7 +237,8 @@ public class IsSigMethodCriterion implements Criterion {
           if (arrayBracket > -1) {
             simpleBaseType = simpleType.substring(0, arrayBracket);
           }
-          if (!simpleBaseType.equals(importSimpleType)) {
+          if (!(simpleBaseType.equals(importSimpleType)
+              || simpleBaseType.startsWith(importSimpleType + "."))) {
             continue;
           }
 
@@ -247,8 +255,14 @@ public class IsSigMethodCriterion implements Criterion {
     return matchable;
   }
 
-  // simpleType can be in JVML format ??  Is that really possible?
   private boolean matchWithPrefix(String fullType, String simpleType, String prefix) {
+    return matchWithPrefixOneWay(fullType, simpleType, prefix)
+        || matchWithPrefixOneWay(simpleType, fullType, prefix);
+  }
+
+  // simpleType can be in JVML format ??  Is that really possible?
+  private boolean matchWithPrefixOneWay(String fullType, String simpleType,
+      String prefix) {
 
     // maybe simpleType is in JVML format
     String simpleType2 = simpleType.replace("/", ".");

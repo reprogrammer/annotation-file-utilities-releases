@@ -1,5 +1,9 @@
 # System test of annotation tools
 
+# This test runs most of the AFU tools, on a single program
+# source-ann/AnnotationTest.java that contains an annotation in every
+# possible location.
+
 ANNCAT ?= ../../../scene-lib/anncat
 XJAVAC ?= ../../../../jsr308-langtools/dist/bin/javac -g
 
@@ -34,7 +38,7 @@ out2.diff: out2.jann
 	diff -u expected-annos.jann out2.jann > out2.diff
 
 .PHONY: check-out2
-# Fail if out2.diff is empty
+# Fail if out2.diff is non-empty
 check-out2: out2.diff
 	[ ! -s out2.diff ] || (cat out2.diff && false)
 
@@ -44,7 +48,7 @@ out3:
 	${XJAVAC} -d out3 source-plain/AnnotationTest.java || (\rm -rf out3 && false)
 
 # Step 4: Insert annotations into the class file.
-# Can debug with:  javap -v out4.class 
+# Can debug with:  javap -v out4.class
 out4.class: out3
 	CLASSPATH=`pwd`/out1 ${ANNCAT} --index expected-annos.jann --out --class out3/annotations/tests/AnnotationTest.class --to out4.class
 
@@ -60,6 +64,6 @@ out5.diff: out5.jann
 	diff -u expected-annos.jann out5.jann > out5.diff
 
 .PHONY: check-out5
-# Fail if out5.diff is empty
+# Fail if out5.diff is non-empty
 check-out5: out5.diff
 	[ ! -s out5.diff ] || (cat out5.diff && false)
