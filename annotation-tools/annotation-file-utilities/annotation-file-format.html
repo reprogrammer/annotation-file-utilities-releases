@@ -48,7 +48,7 @@ TD P{margin:0px;}
 <BODY >
 <!--HEVEA command line is: hevea -fix -exec xxdate.exe urlhref.hva annotation-file-format.tex -->
 <!--CUT DEF section 1 --><TABLE CLASS="title"><TR><TD><H1 CLASS="titlemain">Annotation File Format Specification</H1><H3 CLASS="titlerest"><A HREF="http://types.cs.washington.edu/annotation-file-utilities/"><TT>http://types.cs.washington.edu/annotation-file-utilities/</TT></A><BR>
-August&#XA0;28, 2013</H3></TD></TR>
+October&#XA0;23, 2013</H3></TD></TR>
 </TABLE><!--TOC section Contents-->
 <H2 CLASS="section"><!--SEC ANCHOR -->Contents</H2><!--SEC END --><UL CLASS="toc"><LI CLASS="li-toc">
 <A HREF="#htoc1">1&#XA0;&#XA0;Purpose: External storage of annotations</A>
@@ -302,6 +302,7 @@ expression:</P><TABLE border=0 cellspacing=0 cellpadding=0><TR><TD ALIGN=left NO
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>instanceof</EM></FONT>*</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>new</EM></FONT>*</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>source-insert-typecast</EM></FONT>*
+&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>source-insert-annotation</EM></FONT>*
 </TD></TR>
 </TABLE><P>Additionally, a variable declaration in a method body can be annotated with the
 <FONT COLOR=purple><EM>variable-definition</EM></FONT> rule, which appears below.</P><P>Because of the differences between Java source code and <TT>.class</TT> files,
@@ -315,7 +316,11 @@ code index. This can be done in a single <TT>.jaif</TT> file or two separate
 redundant information to insert annotations on signatures in both <TT>.class</TT>
 files and source code.</P><P>Additionally, a new typecast with annotations (rather than an annotation added to an
 existing typecast) can be inserted into source code. This uses a third
-syntax that is described below under &#X201C;AST paths&#X201D;.</P><!--TOC subsubsection Bytecode offsets-->
+syntax that is described below under &#X201C;AST paths&#X201D;.
+A second way to insert a typecast is by specifying just an annotation, not
+a full typecast (<TT>insert-annotation</TT> instead of
+<TT>insert-typecast</TT>). In this case, the source annotation insertion
+tool generates a full typecast if Java syntax requires one.</P><!--TOC subsubsection Bytecode offsets-->
 <H4 CLASS="subsubsection"><!--SEC ANCHOR -->2.3.1&#XA0;&#XA0;Bytecode offsets<A NAME="bytecode-offsets"></A></H4><!--SEC END --><P>For locations in bytecode, the
 annotation file uses offsets into the bytecode array of the class file to
 indicate the specific expression to which the annotation refers. Because
@@ -488,7 +493,11 @@ public class ASTPathExample {
         }
     }
 }
-</PRE><P>Note that a cast can be inserted on any expression, not
+</PRE><P>Using <TT>insert-annotation</TT> instead of <TT>insert-typecast</TT> yields
+almost the same result &#X2014; it also inserts a cast. The sole difference
+is the inability to specify the type in the cast expression. If you use
+<TT>insert-annotation</TT>, then the annotation inserter infers the type,
+which is <TT>int</TT> in this case.</P><P>Note that a cast can be inserted on any expression, not
 just the deepest expression in the AST. For example, a cast could be inserted on
 the expression <TT>i + j</TT>, the identifier <TT>i</TT>, and/or the identifier <TT>j</TT>.</P><P>To help create correct AST paths it may be useful to view the AST of a class.
 The Checker Framework has a processor to do this. The following command will

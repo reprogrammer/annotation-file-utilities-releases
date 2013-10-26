@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -22,6 +23,7 @@ import plume.UtilMDE;
 import annotator.Source.CompilerException;
 import annotator.find.Criteria;
 import annotator.find.Insertion;
+import annotator.find.ReceiverInsertion;
 import annotator.find.TreeFinder;
 import annotator.specification.IndexFileSpecification;
 import annotator.specification.Specification;
@@ -288,9 +290,16 @@ public class Main {
         }
 
         Set<Integer> positionKeysUnsorted = positions.keySet();
-        Set<Integer> positionKeysSorted = new TreeSet<Integer>(new TreeFinder.ReverseIntegerComparator());
+        Set<Integer> positionKeysSorted =
+          new TreeSet<Integer>(new Comparator<Integer>() {
+            @Override
+            public int compare(Integer o1, Integer o2) {
+              return o1.compareTo(o2) * -1;
+            }
+          });
         positionKeysSorted.addAll(positionKeysUnsorted);
         for (Integer pos : positionKeysSorted) {
+          boolean receiverInserted = false;
           List<Insertion> toInsertList = new ArrayList<Insertion>(positions.get(pos));
           Collections.reverse(toInsertList);
           if (debug) {
@@ -328,6 +337,12 @@ public class Main {
               precedingChar = src.charAt(pos - 1);
             } else {
               precedingChar = '\0';
+            }
+
+            if (iToInsert.getKind() == Insertion.Kind.RECEIVER) {
+              ReceiverInsertion ri = (ReceiverInsertion) iToInsert;
+              ri.setAnnotationsOnly(receiverInserted);
+              receiverInserted = true;
             }
 
             String toInsert = iToInsert.getText(comments, abbreviate,

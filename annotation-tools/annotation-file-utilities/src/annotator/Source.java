@@ -22,6 +22,7 @@ public final class Source {
     private JavacTask task;
     private StringBuilder source;
     private DiagnosticCollector<JavaFileObject> diagnostics;
+    private String path;
 
     /**
      * Signifies that a problem has occurred with the compiler that produces
@@ -74,6 +75,7 @@ public final class Source {
         this.task = (JavacTask)cTask;
 
         // Read the source file into a buffer.
+        path = src;
         source = new StringBuilder();
         FileInputStream in = new FileInputStream(src);
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
@@ -99,18 +101,28 @@ public final class Source {
             for (CompilationUnitTree tree : task.parse())
                 compUnits.add(tree);
 
-            // Add type information to the AST.
-            task.analyze();
-
             List<Diagnostic<? extends JavaFileObject>> errors = diagnostics.getDiagnostics();
             if (!diagnostics.getDiagnostics().isEmpty()) {
+                int numErrors = 0;
                 for (Diagnostic<? extends JavaFileObject> d : errors) {
                     System.err.println(d);
+                    if (d.getKind() == Diagnostic.Kind.ERROR) { ++numErrors; }
                 }
-                int size = errors.size();
-                System.err.println(size + " error" + (size != 1 ? "s" : ""));
-                System.err.println("WARNING: Error processing input source files. Please fix and try again.");
-                System.exit(1);
+                if (numErrors > 0) {
+                    System.err.println(numErrors + " error" + (numErrors != 1 ? "s" : ""));
+                    System.err.println("WARNING: Error processing input source files. Please fix and try again.");
+                    System.exit(1);
+                }
+            }
+
+            // Add type information to the AST.
+            try {
+              task.analyze();
+            } catch (Exception e) {
+              System.err.println("WARNING: " + path
+                  + ": type analysis failed; skipping");
+              System.err.println("(incomplete CLASSPATH?)");
+              return Collections.<CompilationUnitTree>emptySet();
             }
 
             return compUnits;
