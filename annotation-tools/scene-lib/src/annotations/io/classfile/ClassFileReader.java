@@ -1,7 +1,7 @@
 package annotations.io.classfile;
 
 /*>>>
-import checkers.nullness.quals.*;
+import org.checkerframework.checker.nullness.qual.*;
 */
 
 import java.io.*;
@@ -22,7 +22,7 @@ import annotations.io.IndexFileWriter;
 public class ClassFileReader {
 
   public static final String INDEX_UTILS_VERSION
-    = "Annotation File Utilities v3.5.5";
+    = "Annotation File Utilities v3.6.2";
 
   @Option("-h print usage information and exit")
   public static boolean help = false;
@@ -39,7 +39,11 @@ public class ClassFileReader {
     + linesep
     + "a/b/C.class.  Extracts the annotations from each such argument and prints"
     + linesep
-    + "them in index-file format to a.b.C.jaif .  Options:";
+    + "them in index-file format to a.b.C.jaif .  Arguments beginning with a"
+    + linesep
+    + "single '@' are interpreted as argument files to be read and expanded into"
+    + linesep
+    + "the command line.  Options:";
 
   /**
    * From the command line, read annotations from a class file and write
@@ -58,7 +62,20 @@ public class ClassFileReader {
    */
   public static void main(String[] args) throws IOException {
     Options options = new Options(usage, ClassFileReader.class);
-    args = options.parse_or_usage(CommandLine.parse(args));
+    String[] file_args;
+
+    try {
+      String[] cl_args = CommandLine.parse(args);
+      file_args = options.parse_or_usage(cl_args);
+    } catch (IOException ex) {
+      System.err.println(ex);
+      System.err.println("(For non-argfile beginning with \"@\", use \"@@\" for initial \"@\".");
+      System.err.println("Alternative for filenames: indicate directory, e.g. as './@file'.");
+      System.err.println("Alternative for flags: use '=', as in '-o=@Deprecated'.)");
+      file_args = null;  // Eclipse compiler issue workaround
+      System.exit(1);
+    }
+
     if (version) {
       System.out.printf("extract-annotations (%s)", INDEX_UTILS_VERSION);
     }
@@ -69,19 +86,19 @@ public class ClassFileReader {
       System.exit(-1);
     }
 
-    if (args.length == 0) {
+    if (file_args.length == 0) {
       options.print_usage("No arguments given.");
       System.exit(-1);
     }
 
     // check args for well-formed names
-    for (String arg : args) {
+    for (String arg : file_args) {
       if (!checkClass(arg)) {
         System.exit(-1);
       }
     }
 
-    for (String origName : args) {
+    for (String origName : file_args) {
       System.out.println("reading: " + origName);
       String className = origName;
       if (origName.endsWith(".class")) {

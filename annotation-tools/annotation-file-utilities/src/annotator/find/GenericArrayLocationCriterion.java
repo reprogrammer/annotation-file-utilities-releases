@@ -3,7 +3,6 @@ package annotator.find;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
 import javax.lang.model.type.TypeKind;
 
 import annotations.el.InnerTypeLocation;
@@ -122,13 +121,18 @@ public class GenericArrayLocationCriterion implements Criterion {
       child = ((NewArrayTree) leaf).getType();
     }
     if (child != null && child.getKind() == Tree.Kind.MEMBER_SELECT) {
-      return false;
+      JCExpression exp = ((JCFieldAccess) child).getExpression();
+      if (exp.type != null && exp.type.getKind() == TypeKind.PACKAGE
+          || location.isEmpty()
+          || (location.get(location.size()-1)).tag
+              != TypePathEntryKind.INNER_TYPE) {
+          return false;
+      }
     }
 
     if (leaf.getKind() == Tree.Kind.MEMBER_SELECT) {
       JCFieldAccess fieldAccess = (JCFieldAccess) leaf;
-      if (fieldAccess.type != null && fieldAccess.type.getKind() == TypeKind.DECLARED
-          && fieldAccess.type.tsym.isStatic()) {
+      if (isStatic(fieldAccess)) {
         // If this MEMBER_SELECT is for a static class...
         if (location.isEmpty()) {
           // ...and it does not go on a compound type, this is the right place.
@@ -153,7 +157,11 @@ public class GenericArrayLocationCriterion implements Criterion {
           } // else, keep going to make sure we're in the right part of the
             // compound type
         } else {
-          return false;
+          if (!location.isEmpty()
+              && location.get(location.size()-1).tag
+                  != TypePathEntryKind.INNER_TYPE) {
+            return false;
+          }
         }
       }
     }
@@ -230,44 +238,110 @@ public class GenericArrayLocationCriterion implements Criterion {
       }
 
       TypePathEntry loc = locationRemaining.get(locationRemaining.size()-1);
-      if (loc.tag == TypePathEntryKind.WILDCARD && leaf.getKind() == Tree.Kind.UNBOUNDED_WILDCARD) {
+      if (loc.tag == TypePathEntryKind.INNER_TYPE) {
+        if (leaf.getKind() == Tree.Kind.PARAMETERIZED_TYPE) {
+          leaf = parent;
+          parentPath = parentPath.getParentPath();
+          parent = parentPath.getLeaf();
+        }
+        if (leaf.getKind() != Tree.Kind.MEMBER_SELECT) { return false; }
+
+        JCFieldAccess fieldAccess = (JCFieldAccess) leaf;
+        if (isStatic(fieldAccess)) {
+          return false;
+        }
+        locationRemaining.remove(locationRemaining.size()-1);
+        leaf = fieldAccess.selected;
+        pathRemaining = parentPath;
+            //TreePath.getPath(pathRemaining.getCompilationUnit(), leaf);
+      } else if (loc.tag == TypePathEntryKind.WILDCARD
+          && leaf.getKind() == Tree.Kind.UNBOUNDED_WILDCARD) {
         // Check if the leaf is an unbounded wildcard instead of the parent, since unbounded
         // wildcard has no members so it can't be the parent of anything.
         if (locationRemaining.size() == 0) {
           return false;
         }
+
+        // The following check is necessary because Oracle has decided that
+        //   x instanceof Class<? extends Object>
+        // will remain illegal even though it means the same thing as
+        //   x instanceof Class<?>.
+        TreePath gpath = parentPath.getParentPath();
+        if (gpath != null) {  // TODO: skip over existing annotations?
+          Tree gparent = gpath.getLeaf();
+          if (gparent.getKind() == Tree.Kind.INSTANCE_OF) {
+            System.err.println("WARNING: wildcard bounds not allowed in "
+                + "'instanceof' expression; skipping insertion");
+            return false;
+          } else if (gparent.getKind() == Tree.Kind.PARAMETERIZED_TYPE) {
+            gpath = gpath.getParentPath();
+            if (gpath != null
+                && gpath.getLeaf().getKind() == Tree.Kind.ARRAY_TYPE) {
+              System.err.println("WARNING: wildcard bounds not allowed in "
+                  + "generic array type; skipping insertion");
+              return false;
+            }
+          }
+        }
         locationRemaining.remove(locationRemaining.size() - 1);
       } else if (parent.getKind() == Tree.Kind.PARAMETERIZED_TYPE) {
-        if (loc.tag == TypePathEntryKind.INNER_TYPE) {
-          Tree type = ((ParameterizedTypeTree) leaf).getType();
-          do {
-            if (type.getKind() == Tree.Kind.ANNOTATED_TYPE) {
-              type = ((AnnotatedTypeTree) type).getUnderlyingType();
-            }
-            if (type.getKind() != Tree.Kind.MEMBER_SELECT) { return false; }
-            locationRemaining.remove(locationRemaining.size()-1);
-            if (locationRemaining.isEmpty()) { return true; }
-            loc = locationRemaining.get(locationRemaining.size()-1);
-            type = ((MemberSelectTree) type).getExpression();
-          } while (loc.tag == TypePathEntryKind.INNER_TYPE);
-        }
         if (loc.tag != TypePathEntryKind.TYPE_ARGUMENT) {
           return false;
         }
+
+        // Find the outermost type in the AST; if it has parameters,
+        // pop the stack once for each inner type on the end of the type
+        // path and check the parameter.
+        Tree inner = ((ParameterizedTypeTree) parent).getType();
+        int i = locationRemaining.size() - 1;  // last valid type path index
+        locationRemaining.remove(i--);
+        while (inner.getKind() == Tree.Kind.MEMBER_SELECT
+            && !isStatic((JCFieldAccess) inner)) {
+          //fieldAccess.type != null && fieldAccess.type.getKind() == TypeKind.DECLARED
+          //&& fieldAccess.type.tsym.isStatic()
+          if (i < 0 || locationRemaining.get(i).tag !=
+              TypePathEntryKind.INNER_TYPE) {
+            return false;
+          }
+          locationRemaining.remove(i--);
+          inner = ((MemberSelectTree) inner).getExpression();
+          if (inner.getKind() == Tree.Kind.ANNOTATED_TYPE) {
+            inner = ((AnnotatedTypeTree) inner).getUnderlyingType();
+          }
+          if (inner.getKind() == Tree.Kind.PARAMETERIZED_TYPE) {
+            inner = ((ParameterizedTypeTree) inner).getType();
+          }
+        }
+        if (i >= 0 && locationRemaining.get(i).tag ==
+            TypePathEntryKind.INNER_TYPE) {
+          return false;
+        }
+
         // annotating List<@A Integer>
         // System.out.printf("parent instanceof ParameterizedTypeTree: %s loc=%d%n",
         //                   Main.treeToString(parent), loc);
-        ParameterizedTypeTree ptt = (ParameterizedTypeTree) parent;
-        List<? extends Tree> childTrees = ptt.getTypeArguments();
+        List<? extends Tree> childTrees =
+            ((ParameterizedTypeTree) parent).getTypeArguments();
         boolean found = false;
-        if (childTrees.size() > loc.arg ) {
+        if (childTrees.size() > loc.arg) {
           Tree childi = childTrees.get(loc.arg);
-
           if (childi.getKind() == Tree.Kind.ANNOTATED_TYPE) {
-              childi = ((AnnotatedTypeTree) childi).getUnderlyingType();
+            childi = ((AnnotatedTypeTree) childi).getUnderlyingType();
           }
-          if (childi.equals(leaf)) { 
-            locationRemaining.remove(locationRemaining.size()-1);
+          if (childi == leaf) {
+            for (TreePath outerPath = parentPath.getParentPath();
+                outerPath.getLeaf().getKind() == Tree.Kind.MEMBER_SELECT
+                    && !isStatic((JCFieldAccess) outerPath.getLeaf());
+                outerPath = outerPath.getParentPath()) {
+              outerPath = outerPath.getParentPath();
+              if (outerPath.getLeaf().getKind() == Tree.Kind.ANNOTATED_TYPE) {
+                outerPath = outerPath.getParentPath();
+              }
+              if (outerPath.getLeaf().getKind() != Tree.Kind.PARAMETERIZED_TYPE) {
+                break;
+              }
+              parentPath = outerPath;
+            }
             pathRemaining = parentPath;
             found = true;
           }
@@ -380,6 +454,16 @@ public class GenericArrayLocationCriterion implements Criterion {
     }
 
     return ! isGenericOrArray(parent);
+  }
+
+  /**
+   * @param fieldAccess
+   * @return
+   */
+  private boolean isStatic(JCFieldAccess fieldAccess) {
+    return fieldAccess.type != null
+        && fieldAccess.type.getKind() == TypeKind.DECLARED
+        && fieldAccess.type.tsym.isStatic();
   }
 
   private boolean isGenericOrArray(Tree t) {

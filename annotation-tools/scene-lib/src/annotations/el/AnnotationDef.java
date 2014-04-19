@@ -1,8 +1,8 @@
 package annotations.el;
 
 /*>>>
-import checkers.nullness.quals.Nullable;
-import checkers.javari.quals.ReadOnly;
+import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.javari.qual.ReadOnly;
 */
 
 import java.io.File;
@@ -148,9 +148,10 @@ public final /*@ReadOnly*/ class AnnotationDef extends AElement {
      * name with the same field names and types.
      */
     @Override
-    public boolean equals(/*>>> @ReadOnly AnnotationDef this, */ /*@ReadOnly*/ Object o) {
+    public boolean equals(/*>>> @ReadOnly AnnotationDef this, */
+            /*@ReadOnly*/ Object o) {
         return o instanceof AnnotationDef
-                && equals((AnnotationDef) o);
+            && ((AnnotationDef) o).equals(this);
     }
 
     /**

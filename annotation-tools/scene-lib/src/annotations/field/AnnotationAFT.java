@@ -1,8 +1,8 @@
 package annotations.field;
 
 /*>>>
-import checkers.nullness.quals.*;
-import checkers.javari.quals.*;
+import org.checkerframework.checker.nullness.qual.*;
+import org.checkerframework.checker.javari.qual.*;
 */
 
 import annotations.Annotation;
@@ -55,4 +55,8 @@ public final /*@ReadOnly*/ class AnnotationAFT extends ScalarAFT {
         return o.toString();
     }
 
+    @Override
+    public <R, T> R accept(AFTVisitor<R, T> v, T arg) {
+        return v.visitAnnotationAFT(this, arg);
+    }
 }

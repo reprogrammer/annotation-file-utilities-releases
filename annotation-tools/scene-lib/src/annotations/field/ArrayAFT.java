@@ -1,8 +1,8 @@
 package annotations.field;
 
 /*>>>
-import checkers.nullness.quals.*;
-import checkers.javari.quals.*;
+import org.checkerframework.checker.nullness.qual.*;
+import org.checkerframework.checker.javari.qual.*;
 */
 
 import java.util.Collection;
@@ -76,4 +76,8 @@ public final /*@ReadOnly*/ class ArrayAFT extends AnnotationFieldType {
         return result.toString();
     }
 
+    @Override
+    public <R, T> R accept(AFTVisitor<R, T> v, T arg) {
+        return v.visitArrayAFT(this, arg);
+    }
 }

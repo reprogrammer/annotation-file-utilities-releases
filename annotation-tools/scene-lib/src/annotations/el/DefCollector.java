@@ -8,8 +8,8 @@ import annotations.field.AnnotationAFT;
 import annotations.field.AnnotationFieldType;
 
 /*>>>
-import checkers.nullness.quals.*;
-import checkers.javari.quals.*;
+import org.checkerframework.checker.nullness.qual.*;
+import org.checkerframework.checker.javari.qual.*;
 */
 
 /**
@@ -135,13 +135,13 @@ public abstract class DefCollector {
         collect(m.receiver);
         for (AElement p : m.parameters.values())
             collect(p);
-        for (AElement l : m.locals.values())
+        for (AField l : m.body.locals.values())
             collect(l);
-        for (ATypeElement tc : m.typecasts.values())
+        for (ATypeElement tc : m.body.typecasts.values())
             collect(tc);
-        for (ATypeElement i : m.instanceofs.values())
+        for (ATypeElement i : m.body.instanceofs.values())
             collect(i);
-        for (ATypeElement n : m.news.values())
+        for (ATypeElement n : m.body.news.values())
             collect(n);
     }
 

@@ -48,7 +48,7 @@ TD P{margin:0px;}
 <BODY >
 <!--HEVEA command line is: hevea -fix -exec xxdate.exe urlhref.hva annotation-file-format.tex -->
 <!--CUT DEF section 1 --><TABLE CLASS="title"><TR><TD><H1 CLASS="titlemain">Annotation File Format Specification</H1><H3 CLASS="titlerest"><A HREF="http://types.cs.washington.edu/annotation-file-utilities/"><TT>http://types.cs.washington.edu/annotation-file-utilities/</TT></A><BR>
-October&#XA0;23, 2013</H3></TD></TR>
+April&#XA0;2, 2014</H3></TD></TR>
 </TABLE><!--TOC section Contents-->
 <H2 CLASS="section"><!--SEC ANCHOR -->Contents</H2><!--SEC END --><UL CLASS="toc"><LI CLASS="li-toc">
 <A HREF="#htoc1">1&#XA0;&#XA0;Purpose: External storage of annotations</A>
@@ -192,6 +192,8 @@ class names for a class is to compile the class and look at the filenames of the
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>extends</EM></FONT>*</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>implements</EM></FONT>*</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>field-definition</EM></FONT>*</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>staticinit</EM></FONT>*</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>instanceinit</EM></FONT>*</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>method-definition</EM></FONT>*
 </TD></TR>
 </TABLE><P>Annotations on the &#X201C;<B>class</B>&#X201D; line are annotations on the class declaration,
@@ -228,6 +230,17 @@ define annotations on the names of classes a class <TT>extends</TT> or
 <TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>implements</EM></FONT> ::=</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The integer is the zero-based index of the implemented interface.</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>implements</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> &#X201C;<B>:</B>&#X201D; <FONT COLOR=purple><EM>type-annotation</EM></FONT>* &#X201C;<B>\n</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>compound-type</EM></FONT>*
+</TD></TR>
+</TABLE><!--TOC paragraph Static and instance initializers-->
+<H5 CLASS="paragraph"><!--SEC ANCHOR -->Static and instance initializers</H5><!--SEC END --><P>The <FONT COLOR=purple><EM>staticinit</EM></FONT> and <FONT COLOR=purple><EM>instanceinit</EM></FONT> productions
+define annotations on code within static or instance initializer blocks.</P><TABLE border=0 cellspacing=0 cellpadding=0><TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>staticinit</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The integer is the zero-based index of the implemented interface.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>staticinit</B>&#X201D; &#X201C;<B>*</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> &#X201C;<B>:</B>&#X201D; &#X201C;<B>\n</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>compound-type</EM></FONT>*</TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>instanceinit</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;# The integer is the zero-based index of the implemented interface.</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>instanceinit</B>&#X201D; &#X201C;<B>*</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> &#X201C;<B>:</B>&#X201D; &#X201C;<B>\n</B>&#X201D;</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>compound-type</EM></FONT>*
 </TD></TR>
 </TABLE><!--TOC subsubsection Field definitions-->
@@ -301,8 +314,8 @@ expression:</P><TABLE border=0 cellspacing=0 cellpadding=0><TR><TD ALIGN=left NO
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>typecast</EM></FONT>*</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>instanceof</EM></FONT>*</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>new</EM></FONT>*</TD></TR>
-<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>source-insert-typecast</EM></FONT>*
-&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>source-insert-annotation</EM></FONT>*
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>source-insert-typecast</EM></FONT>*</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>source-insert-annotation</EM></FONT>*
 </TD></TR>
 </TABLE><P>Additionally, a variable declaration in a method body can be annotated with the
 <FONT COLOR=purple><EM>variable-definition</EM></FONT> rule, which appears below.</P><P>Because of the differences between Java source code and <TT>.class</TT> files,
@@ -401,7 +414,9 @@ source code index syntax.</P><P>The grammar uses &#X201C;<B>#</B>&#X201D; for by
 </TABLE><!--TOC subsubsection AST paths-->
 <H4 CLASS="subsubsection"><!--SEC ANCHOR -->2.3.4&#XA0;&#XA0;AST paths<A NAME="ast-paths"></A></H4><!--SEC END --><P>A path through the AST (abstract
 syntax tree) specifies an arbitrary expression in source code to modify.
-Currently, AST paths can only be used to specify a location to insert a cast.</P><P>For a cast insertion, the <TT>.jaif</TT> file specifies the type to cast to.
+AST paths can be used in the <TT>.jaif</TT> file to specify a location to
+insert either a bare annotation (&#X201C;<B>insert-annotation</B>&#X201D;) or a cast
+(&#X201C;<B>insert-typecast</B>&#X201D;).</P><P>For a cast insertion, the <TT>.jaif</TT> file specifies the type to cast to.
 The annotations on the &#X201C;<B>insert-typecast</B>&#X201D; line will be inserted on
 the outermost type of the type to cast to. If the type to cast to is a compound
 type then annotations on parts of the compound type are specified with the
@@ -501,12 +516,13 @@ which is <TT>int</TT> in this case.</P><P>Note that a cast can be inserted on an
 just the deepest expression in the AST. For example, a cast could be inserted on
 the expression <TT>i + j</TT>, the identifier <TT>i</TT>, and/or the identifier <TT>j</TT>.</P><P>To help create correct AST paths it may be useful to view the AST of a class.
 The Checker Framework has a processor to do this. The following command will
-output indented AST nodes for the entire input program.</P><PRE CLASS="verbatim">javac -processor checkers.util.debug.TreeDebug ASTPathExample.java
+output indented AST nodes for the entire input program.</P><PRE CLASS="verbatim">javac -processor org.checkerframework.common.util.debug.TreeDebug ASTPathExample.java
 </PRE><P>The following is the grammar for AST paths.</P><TABLE border=0 cellspacing=0 cellpadding=0><TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>ast-path</EM></FONT> ::=</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>ast-entry</EM></FONT> [ &#X201C;<B>,</B>&#X201D; <FONT COLOR=purple><EM>ast-entry</EM></FONT> ]+</TD></TR>
 <TR><TD ALIGN=left NOWRAP></TD></TR>
 <TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>ast-entry</EM></FONT> ::=</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;<FONT COLOR=purple><EM>annotated-type</EM></FONT></TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>annotation</EM></FONT></TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>array-access</EM></FONT></TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>array-type</EM></FONT></TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>assert</EM></FONT></TD></TR>
@@ -514,6 +530,7 @@ output indented AST nodes for the entire input program.</P><PRE CLASS="verbatim"
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>binary</EM></FONT></TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>block</EM></FONT></TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>case</EM></FONT></TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>class-declaration</EM></FONT></TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>catch</EM></FONT></TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>compound-assignment</EM></FONT></TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>conditional-expression</EM></FONT></TD></TR>
@@ -523,10 +540,12 @@ output indented AST nodes for the entire input program.</P><PRE CLASS="verbatim"
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>for-loop</EM></FONT></TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>if</EM></FONT></TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>instance-of</EM></FONT></TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>intersection-type</EM></FONT></TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>labeled-statement</EM></FONT></TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>lambda-expression</EM></FONT></TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>member-reference</EM></FONT></TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>member-select</EM></FONT></TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>method-declaration</EM></FONT></TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>method-invocation</EM></FONT></TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>new-array</EM></FONT></TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>new-class</EM></FONT></TD></TR>
@@ -538,6 +557,7 @@ output indented AST nodes for the entire input program.</P><PRE CLASS="verbatim"
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>throw</EM></FONT></TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>try</EM></FONT></TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>type-cast</EM></FONT></TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>type-parameter</EM></FONT></TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>unary</EM></FONT></TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>union-type</EM></FONT></TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;| <FONT COLOR=purple><EM>variable-type</EM></FONT></TD></TR>
@@ -546,6 +566,9 @@ output indented AST nodes for the entire input program.</P><PRE CLASS="verbatim"
 <TR><TD ALIGN=left NOWRAP></TD></TR>
 <TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>annotated-type</EM></FONT> :: =</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>AnnotatedType</B>&#X201D; &#X201C;<B>.</B>&#X201D; ( ( &#X201C;<B>annotation</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> ) | &#X201C;<B>underlyingType</B>&#X201D; )</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>annotation</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>Annotation</B>&#X201D; &#X201C;<B>.</B>&#X201D; ( &#X201C;<B>type</B>&#X201D; | ( &#X201C;<B>argument</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> ) )</TD></TR>
 <TR><TD ALIGN=left NOWRAP></TD></TR>
 <TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>array-access</EM></FONT> ::=</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>ArrayAccess</B>&#X201D; &#X201C;<B>.</B>&#X201D; ( &#X201C;<B>expression</B>&#X201D; | &#X201C;<B>index</B>&#X201D; )</TD></TR>
@@ -571,6 +594,9 @@ output indented AST nodes for the entire input program.</P><PRE CLASS="verbatim"
 <TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>catch</EM></FONT> ::=</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>Catch</B>&#X201D; &#X201C;<B>.</B>&#X201D; ( &#X201C;<B>parameter</B>&#X201D; | &#X201C;<B>block</B>&#X201D; )</TD></TR>
 <TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>class-declaration</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>Class</B>&#X201D; &#X201C;<B>.</B>&#X201D; ( ( &#X201C;<B>bound</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> ) | ( &#X201C;<B>typeParameter</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> ) )</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
 <TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>compound-assignment</EM></FONT> ::=</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>CompoundAssignment</B>&#X201D; &#X201C;<B>.</B>&#X201D; ( &#X201C;<B>variable</B>&#X201D; | &#X201C;<B>expression</B>&#X201D; )</TD></TR>
 <TR><TD ALIGN=left NOWRAP></TD></TR>
@@ -595,6 +621,9 @@ output indented AST nodes for the entire input program.</P><PRE CLASS="verbatim"
 <TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>instance-of</EM></FONT> ::=</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>InstanceOf</B>&#X201D; &#X201C;<B>.</B>&#X201D; ( &#X201C;<B>expression</B>&#X201D; | &#X201C;<B>type</B>&#X201D; )</TD></TR>
 <TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>intersection-type</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>IntersectionType</B>&#X201D; &#X201C;<B>.</B>&#X201D; &#X201C;<B>bound</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT></TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
 <TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>labeled-statement</EM></FONT> ::=</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>LabeledStatement</B>&#X201D; &#X201C;<B>.</B>&#X201D; &#X201C;<B>statement</B>&#X201D;</TD></TR>
 <TR><TD ALIGN=left NOWRAP></TD></TR>
@@ -606,6 +635,9 @@ output indented AST nodes for the entire input program.</P><PRE CLASS="verbatim"
 <TR><TD ALIGN=left NOWRAP></TD></TR>
 <TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>member-select</EM></FONT> ::=</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>MemberSelect</B>&#X201D; &#X201C;<B>.</B>&#X201D; &#X201C;<B>expression</B>&#X201D;</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>method-declaration</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>Method</B>&#X201D; &#X201C;<B>.</B>&#X201D; ( &#X201C;<B>body</B>&#X201D; | ( &#X201C;<B>parameter</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> ) | &#X201C;<B>type</B>&#X201D; | ( &#X201C;<B>typeParameter</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> ) )</TD></TR>
 <TR><TD ALIGN=left NOWRAP></TD></TR>
 <TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>method-invocation</EM></FONT> ::=</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>MethodInvocation</B>&#X201D; &#X201C;<B>.</B>&#X201D; ( ( &#X201C;<B>typeArgument</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT> ) | &#X201C;<B>methodSelect</B>&#X201D;</TD></TR>
@@ -641,6 +673,9 @@ output indented AST nodes for the entire input program.</P><PRE CLASS="verbatim"
 <TR><TD ALIGN=left NOWRAP></TD></TR>
 <TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>type-cast</EM></FONT> ::=</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>TypeCast</B>&#X201D; &#X201C;<B>.</B>&#X201D; ( &#X201C;<B>type</B>&#X201D; | &#X201C;<B>expression</B>&#X201D; )</TD></TR>
+<TR><TD ALIGN=left NOWRAP></TD></TR>
+<TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>type-parameter</EM></FONT> ::=</TD></TR>
+<TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>TypeParameter</B>&#X201D; &#X201C;<B>.</B>&#X201D; &#X201C;<B>bound</B>&#X201D; <FONT COLOR=purple><EM>integer</EM></FONT></TD></TR>
 <TR><TD ALIGN=left NOWRAP></TD></TR>
 <TR><TD ALIGN=left NOWRAP><FONT COLOR=purple><EM>unary</EM></FONT> ::=</TD></TR>
 <TR><TD ALIGN=left NOWRAP>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<B>Unary</B>&#X201D; &#X201C;<B>.</B>&#X201D; &#X201C;<B>expression</B>&#X201D;</TD></TR>

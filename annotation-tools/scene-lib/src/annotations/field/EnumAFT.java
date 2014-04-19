@@ -1,8 +1,8 @@
 package annotations.field;
 
 /*>>>
-import checkers.nullness.quals.*;
-import checkers.javari.quals.*;
+import org.checkerframework.checker.nullness.qual.*;
+import org.checkerframework.checker.javari.qual.*;
 */
 
 /**
@@ -50,4 +50,9 @@ public final /*@ReadOnly*/ class EnumAFT extends ScalarAFT {
         return typeName + "." + o.toString();
     }
 
+
+    @Override
+    public <R, T> R accept(AFTVisitor<R, T> v, T arg) {
+        return v.visitEnumAFT(this, arg);
+    }
 }

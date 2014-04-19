@@ -15,7 +15,82 @@ This is the changelog for the
 <ul>
 
   <li>
-    Version 3.5.6 (released Oct 22, 2013):
+    Version 3.6.3 (released Apr 2, 2014):
+    <ul>
+        <li>
+          Eliminates insert-annotation problems with handling Java 8 class files.
+        </li>
+        <li>
+          Corrects annotation placement within a qualified type name.
+        </li>
+        <li>
+          Fills in gaps in AST Path API.  All (Java 7) non-declaration nodes can now be identified by a path from an enclosing declaration.
+        </li>
+        <li>
+          Expands scene-lib API with visitor framework and new class <code>APIIndex</code>, which provides a cache that maps Java abstract syntax tree nodes to AST paths as defined in the annotation file format specification.
+        </li>
+    </ul>
+  </li>
+  <li>
+    Version 3.6.2 (released Mar 5, 2014):
+    <ul>
+        <li>
+          Expands scene-lib API with visitor framework and new class <code>APIIndex</code>, which provides a cache that maps Java abstract syntax tree nodes to AST paths as defined in the annotation file format specification.
+        </li>
+    </ul>
+  </li>
+  <li>
+    Version 3.6.1 (released Feb 19, 2014):
+    <ul>
+        <li>
+          Adds missing cases for AST path-based annotation/cast insertion.
+        </li>
+    </ul>
+  </li>
+  <li>
+    Version 3.5.9 (released Jan 2, 2014):
+    <ul>
+        <li>
+          Fixes assorted minor bugs.
+        </li>
+    </ul>
+  </li>
+  <li>
+    Version 3.5.8 (released Dec 9, 2013):
+    <ul>
+        <li>
+          Creates output directory in current working directory (by default), rather than relative to input pathname.
+        </li>
+        <li>
+          Recognizes "instanceinit" keyword in JAIF for adding annotations inside instance initializers.
+        </li>
+        <li>
+          Corrects syntax of results of inserting annotations on bare array literals.
+        </li>
+        <li>
+          More fully treats enum, interface, and annotation declarations in accordance with the rules for class declarations.
+        </li>
+    </ul>
+  </li>
+  <li>
+    Version 3.5.7 (released Nov 15, 2013):
+    <ul>
+        <li>
+          Handles type paths with INNER_TYPE.
+        </li>
+        <li>
+          Disallows annotations on generic array type bounds and on wildcard bounds in "instanceof" expressions, since Java 8 prohibits type bounds in those locations.
+        </li>
+        <li>
+          Vastly improves performance when index file covers numerous source files, by filtering out irrelevant insertions at an earlier stage.
+        </li>
+        <li>
+          Avoids stack overflow during regex matching.
+        </li>
+    </ul>
+  </li>
+  <li>
+    Version 3.5.6 (released Oct 23, 2013):
     <ul>
         <li>
           Adds "insert-annotation" to JAIF format, allowing the use of AST paths to specify source locations for annotation insertion (which previously was possible only for typecast insertions).
@@ -36,7 +111,7 @@ This is the changelog for the
           Fixes many other bugs, most involving receiver insertions.
         </li>
         <li>
-          No longer aborts on (non-fatal) warnings found during the <code>javac</code> type-checking phase of <code>.
+          No longer aborts on (non-fatal) warnings found during the <code>javac</code> type-checking phase of <code>insert-annotations-to-source</code>.
         </li>
     </ul>
   </li>

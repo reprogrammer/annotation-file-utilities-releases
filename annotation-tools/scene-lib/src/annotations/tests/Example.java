@@ -1,8 +1,8 @@
 package annotations.tests;
 
 /*>>>
-import checkers.nullness.quals.NonNull;
-import checkers.javari.quals.ReadOnly;
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.javari.qual.ReadOnly;
 */
 
 import java.io.*;
@@ -53,7 +53,7 @@ public class Example {
     for (Map.Entry<String, AMethod> me : clazz.methods.entrySet()) {
       AMethod method = me.getValue();
 
-      Annotation rro = method.receiver.lookup("ReadOnly");
+      Annotation rro = method.receiver.type.lookup("ReadOnly");
       if (rro == null)
         System.out.println("Method " + me.getKey()
             + " might modify the receiver");

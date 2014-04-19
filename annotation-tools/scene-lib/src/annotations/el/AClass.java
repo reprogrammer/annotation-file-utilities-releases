@@ -6,12 +6,12 @@ import annotations.Annotation;
 import annotations.util.coll.VivifyingMap;
 
 /*>>>
-import checkers.nullness.quals.*;
-import checkers.javari.quals.*;
+import org.checkerframework.checker.nullness.qual.*;
+import org.checkerframework.checker.javari.qual.*;
 */
 
 /** An annotated class */
-public final class AClass extends AElement {
+public final class AClass extends ADeclaration {
     /** The class's annotated type parameter bounds */
     public final VivifyingMap<BoundLocation, ATypeElement> bounds =
             ATypeElement.<BoundLocation>newVivifyingLHMap_ATE();
@@ -34,7 +34,7 @@ public final class AClass extends AElement {
         };
     }
 
-    private static VivifyingMap<Integer, ABlock> createStaticInitMap() {
+    private static VivifyingMap<Integer, ABlock> createInitBlockMap() {
         return new VivifyingMap<Integer, ABlock>(
                 new LinkedHashMap<Integer, ABlock>()) {
             @Override
@@ -77,11 +77,14 @@ public final class AClass extends AElement {
         createMethodMap();
 
     public final VivifyingMap<Integer, ABlock> staticInits =
-        createStaticInitMap();
+        createInitBlockMap();
+
+    public final VivifyingMap<Integer, ABlock> instanceInits =
+        createInitBlockMap();
 
     /** The class's annotated fields; map key is field name */
-    public final VivifyingMap<String, AElement> fields =
-        AElement.<String>newVivifyingLHMap_AET();
+    public final VivifyingMap<String, AField> fields =
+        AField.<String>newVivifyingLHMap_AF();
 
     public final VivifyingMap<String, AExpression> fieldInits =
         createFieldInitMap();
@@ -103,14 +106,19 @@ public final class AClass extends AElement {
      * {@inheritDoc}
      */
     @Override
-    public boolean equals(/*>>> @ReadOnly AClass this,*/ /*@ReadOnly*/ AElement o) {
-        return o instanceof AClass &&
-            ((/*@ReadOnly*/ AClass) o).equalsClass(this);
+    public boolean equals(/*>>> @ReadOnly AClass this,*/
+            /*@ReadOnly*/ Object o) {
+        return o instanceof AClass
+            && ((/*@ReadOnly*/ AClass) o).equalsClass(this);
     }
 
-    boolean equalsClass(/*>>> @ReadOnly AClass this,*/ /*@ReadOnly*/ AClass o) {
-        return equalsElement(o) && bounds.equals(o.bounds)
-            && methods.equals(o.methods) && fields.equals(o.fields)
+    final boolean equalsClass(/*>>> @ReadOnly AClass this,*/
+            /*@ReadOnly*/ AClass o) {
+        return super.equals(o)
+            && className.equals(o.className)
+            && bounds.equals(o.bounds)
+            && methods.equals(o.methods)
+            && fields.equals(o.fields)
             && extendsImplements.equals(o.extendsImplements);
     }
 
@@ -121,6 +129,7 @@ public final class AClass extends AElement {
     public int hashCode(/*>>> @ReadOnly AClass this*/) {
         return super.hashCode() + bounds.hashCode()
             + methods.hashCode() + fields.hashCode()
+            + staticInits.hashCode() + instanceInits.hashCode()
             + extendsImplements.hashCode();
     }
 
@@ -131,6 +140,7 @@ public final class AClass extends AElement {
     public boolean prune() {
         return super.prune() & bounds.prune()
             & methods.prune() & fields.prune()
+            & staticInits.prune() & instanceInits.prune()
             & extendsImplements.prune();
     }
 
@@ -170,9 +180,22 @@ public final class AClass extends AElement {
         sb.append("Static Initializers:\n");
         plume.UtilMDE.mapToString(sb, staticInits, linePrefix + "  ");
         sb.append(linePrefix);
+        sb.append("Instance Initializers:\n");
+        plume.UtilMDE.mapToString(sb, instanceInits, linePrefix + "  ");
+        sb.append(linePrefix);
+        sb.append("AST Typecasts:\n");
+        plume.UtilMDE.mapToString(sb, insertTypecasts, linePrefix + "  ");
+        sb.append(linePrefix);
+        sb.append("AST Annotations:\n");
+        plume.UtilMDE.mapToString(sb, insertAnnotations, linePrefix + "  ");
+        sb.append(linePrefix);
         sb.append("Methods:\n");
         plume.UtilMDE.mapToString(sb, methods, linePrefix + "  ");
         return sb.toString();
     }
 
+    @Override
+    public <R, T> R accept(ElementVisitor<R, T> v, T t) {
+        return v.visitClass(this, t);
+    }
 }

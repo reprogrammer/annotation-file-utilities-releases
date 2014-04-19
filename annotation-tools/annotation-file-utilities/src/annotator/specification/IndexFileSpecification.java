@@ -19,6 +19,7 @@ import annotations.el.ABlock;
 import annotations.el.AClass;
 import annotations.el.AElement;
 import annotations.el.AExpression;
+import annotations.el.AField;
 import annotations.el.AMethod;
 import annotations.el.AScene;
 import annotations.el.ATypeElement;
@@ -38,6 +39,7 @@ import annotator.find.CastInsertion;
 import annotator.find.CloseParenthesisInsertion;
 import annotator.find.Criteria;
 import annotator.find.Insertion;
+import annotator.find.NewInsertion;
 import annotator.find.ReceiverInsertion;
 import annotator.scanner.MethodOffsetClassVisitor;
 
@@ -192,39 +194,50 @@ public class IndexFileSpecification implements Specification {
       parseElement(outerClist, ei);
     }
 
-    for (Map.Entry<String, AElement> entry : clazz.fields.entrySet()) {
+    for (Map.Entry<String, AField> entry : clazz.fields.entrySet()) {
 //      clist = clist.add(Criteria.notInMethod()); // TODO: necessary? what is in class but not in method?
       parseField(clist, entry.getKey(), entry.getValue());
     }
     for (Map.Entry<String, AMethod> entry : clazz.methods.entrySet()) {
-      parseMethod(clist, entry.getKey(), entry.getValue());
+      parseMethod(clist, className, entry.getKey(), entry.getValue());
     }
     for (Map.Entry<Integer, ABlock> entry : clazz.staticInits.entrySet()) {
       parseStaticInit(clist, entry.getKey(), entry.getValue());
+    }
+    for (Map.Entry<Integer, ABlock> entry : clazz.instanceInits.entrySet()) {
+      parseInstanceInit(clist, entry.getKey(), entry.getValue());
     }
     for (Map.Entry<String, AExpression> entry : clazz.fieldInits.entrySet()) {
       parseFieldInit(clist, entry.getKey(), entry.getValue());
     }
 
+    parseASTInsertions(clist, clazz.insertAnnotations, clazz.insertTypecasts);
+
     debug("parseClass(" + className + "):  done");
   }
 
   /** Fill in this.insertions with insertion pairs. */
-  private void parseField(CriterionList clist, String fieldName, AElement field) {
+  private void parseField(CriterionList clist, String fieldName, AField field) {
     clist = clist.add(Criteria.field(fieldName));
 
     // parse declaration annotations
     parseElement(clist, field);
 
     parseInnerAndOuterElements(clist, field.type);
+    parseASTInsertions(clist, field.insertAnnotations, field.insertTypecasts);
   }
 
   private void parseStaticInit(CriterionList clist, int blockID, ABlock block) {
     clist = clist.add(Criteria.inStaticInit(blockID));
     // the method name argument is not used for static initializers, which are only used
-    // in source specifications. Same for field initializers.
+    // in source specifications. Same for instance and field initializers.
     // the empty () are there to prevent the whole string to be removed in later parsing.
-        parseBlock(clist, "static init number " + blockID + "()", block);
+    parseBlock(clist, "static init number " + blockID + "()", block);
+  }
+
+  private void parseInstanceInit(CriterionList clist, int blockID, ABlock block) {
+    clist = clist.add(Criteria.inInstanceInit(blockID));
+    parseBlock(clist, "instance init number " + blockID + "()", block);
   }
 
   // keep the descriptive strings for field initializers and static inits consistent
@@ -276,8 +289,8 @@ public class IndexFileSpecification implements Specification {
    * @param clist The criteria specifying the location of the insertions.
    * @param element Holds the annotations to be inserted.
    * @param innerTypeInsertions The insertions on the inner type of this
-   *         element. This is only used for receiver insertions. See
-   *         {@link ReceiverInsertion} for more details.
+   *         element. This is only used for receiver and "new" insertions.
+   *         See {@link ReceiverInsertion} for more details.
    * @param isCastInsertion {@code true} if this for a cast insertion, {@code false}
    *          otherwise.
    * @return A list of the {@link AnnotationInsertion}s that are created.
@@ -287,6 +300,7 @@ public class IndexFileSpecification implements Specification {
     // Use at most one receiver and one cast insertion and add all of the
     // annotations to the one insertion.
     ReceiverInsertion receiver = null;
+    NewInsertion neu = null;
     CastInsertion cast = null;
     CloseParenthesisInsertion closeParen = null;
     List<Insertion> annotationInsertions = new ArrayList<Insertion>();
@@ -313,6 +327,14 @@ public class IndexFileSpecification implements Specification {
         } else {
           receiver.getType().addAnnotation(annotationString);
         }
+      } else if (criteria.isOnNew() && criteria.getGenericArrayLocation().getLocation().isEmpty()) {
+        if (neu == null) {
+          DeclaredType type = new DeclaredType();
+          type.addAnnotation(annotationString);
+          neu = new NewInsertion(type, criteria, innerTypeInsertions);
+        } else {
+          neu.getType().addAnnotation(annotationString);
+        }
       } else if (element instanceof ATypeElementWithType) {
         if (cast == null) {
           Pair<CastInsertion, CloseParenthesisInsertion> insertions = createCastInsertion(
@@ -337,6 +359,9 @@ public class IndexFileSpecification implements Specification {
     }
     if (receiver != null) {
         this.insertions.add(receiver);
+    }
+    if (neu != null) {
+        this.insertions.add(neu);
     }
     if (cast != null) {
         this.insertions.add(cast);
@@ -439,7 +464,7 @@ public class IndexFileSpecification implements Specification {
     return fieldType.format(a.fieldValues.get(field));
   }
 
-  private void parseMethod(CriterionList clist, String methodName, AMethod method) {
+  private void parseMethod(CriterionList clist, String className, String methodName, AMethod method) {
     // Being "in" a method refers to being somewhere in the
     // method's tree, which includes return types, parameters, receiver, and
     // elements inside the method body.
@@ -450,10 +475,10 @@ public class IndexFileSpecification implements Specification {
 
     // parse receiver
     CriterionList receiverClist = clist.add(Criteria.receiver(methodName));
-    parseInnerAndOuterElements(receiverClist, method.receiver);
+    parseInnerAndOuterElements(receiverClist, method.receiver.type);
 
     // parse return type
-    CriterionList returnClist = clist.add(Criteria.returnType(methodName));
+    CriterionList returnClist = clist.add(Criteria.returnType(className, methodName));
     parseInnerAndOuterElements(returnClist, method.returnType);
 
     // parse bounds of method
@@ -465,27 +490,29 @@ public class IndexFileSpecification implements Specification {
     }
 
     // parse parameters of method
-    for (Entry<Integer, AElement> entry : method.parameters.entrySet()) {
+    for (Entry<Integer, AField> entry : method.parameters.entrySet()) {
       Integer index = entry.getKey();
-      AElement param = entry.getValue();
+      AField param = entry.getValue();
       CriterionList paramClist = clist.add(Criteria.param(methodName, index));
       // parse declaration annotations
-      parseElement(paramClist, param);
+      parseField(paramClist, index.toString(), param);
       parseInnerAndOuterElements(paramClist, param.type);
     }
 
-    parseBlock(clist, methodName, method);
+    // parse insert annotations/typecasts of method
+    parseASTInsertions(clist, method.insertAnnotations, method.insertTypecasts);
+    parseBlock(clist, methodName, method.body);
   }
 
   private void parseBlock(CriterionList clist, String methodName, ABlock block) {
 
     // parse locals of method
-    for (Entry<LocalLocation, AElement> entry : block.locals.entrySet()) {
+    for (Entry<LocalLocation, AField> entry : block.locals.entrySet()) {
       LocalLocation loc = entry.getKey();
       AElement var = entry.getValue();
       CriterionList varClist = clist.add(Criteria.local(methodName, loc));
       // parse declaration annotations
-      parseElement(varClist, var);
+      parseElement(varClist, var);  // TODO: _?_
       parseInnerAndOuterElements(varClist, var.type);
     }
 
@@ -516,17 +543,22 @@ public class IndexFileSpecification implements Specification {
       CriterionList instanceOfClist = clist.add(Criteria.instanceOf(methodName, loc));
       parseInnerAndOuterElements(instanceOfClist, instanceOf);
     }
+  }
 
-    // parse insert annotations of method
-    for (Entry<ASTPath, ATypeElement> entry : exp.insertAnnotations.entrySet()) {
+  private void parseASTInsertions(CriterionList clist,
+      VivifyingMap<ASTPath, ATypeElement> insertAnnotations,
+      VivifyingMap<ASTPath, ATypeElementWithType> insertTypecasts) {
+    for (Entry<ASTPath, ATypeElement> entry : insertAnnotations.entrySet()) {
       ASTPath astPath = entry.getKey();
       ATypeElement insertAnnotation = entry.getValue();
-      CriterionList insertAnnotationClist = clist.add(Criteria.astPath(astPath));
-      parseInnerAndOuterElements(insertAnnotationClist, insertAnnotation, true);
+      CriterionList insertAnnotationClist =
+          clist.add(Criteria.astPath(astPath));
+      if (insertAnnotation instanceof ATypeElement) {
+        parseInnerAndOuterElements(insertAnnotationClist,
+            insertAnnotation, true);
+      }
     }
-
-    // parse insert typecasts of method
-    for (Entry<ASTPath, ATypeElementWithType> entry : exp.insertTypecasts.entrySet()) {
+    for (Entry<ASTPath, ATypeElementWithType> entry : insertTypecasts.entrySet()) {
       ASTPath astPath = entry.getKey();
       ATypeElementWithType insertTypecast = entry.getValue();
       CriterionList insertTypecastClist = clist.add(Criteria.astPath(astPath));

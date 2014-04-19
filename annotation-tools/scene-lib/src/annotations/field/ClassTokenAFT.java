@@ -1,8 +1,8 @@
 package annotations.field;
 
 /*>>>
-import checkers.nullness.quals.*;
-import checkers.javari.quals.*;
+import org.checkerframework.checker.nullness.qual.*;
+import org.checkerframework.checker.javari.qual.*;
 */
 
 /**
@@ -58,4 +58,9 @@ public final /*@ReadOnly*/ class ClassTokenAFT extends ScalarAFT {
         return ((java.lang.Class<?>)o).getName() + ".class";
     }
 
+
+    @Override
+    public <R, T> R accept(AFTVisitor<R, T> v, T arg) {
+        return v.visitClassTokenAFT(this, arg);
+    }
 }

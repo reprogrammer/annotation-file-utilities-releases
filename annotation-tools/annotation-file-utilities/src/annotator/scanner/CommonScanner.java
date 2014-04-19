@@ -1,5 +1,6 @@
 package annotator.scanner;
 
+import com.sun.source.tree.BlockTree;
 import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.util.TreePath;
@@ -11,15 +12,23 @@ import com.sun.source.util.TreePathScanner;
  */
 public class CommonScanner extends TreePathScanner<Void, Void> {
 
+    private static boolean hasClassKind(Tree tree) {
+        Tree.Kind kind = tree.getKind();
+        return kind == Tree.Kind.CLASS
+                || kind == Tree.Kind.INTERFACE
+                || kind == Tree.Kind.ENUM
+                || kind == Tree.Kind.ANNOTATION_TYPE;
+    }
+
     /**
      * The counting context for new, typecast, instanceof, and locals.
-     * This is a path to a method or a field/static initializer.
+     * This is a path to a method or a field/instance/static initializer.
      */
     public static TreePath findCountingContext(TreePath path) {
         while (path != null) {
             if (path.getLeaf().getKind() == Tree.Kind.METHOD ||
                     isFieldInit(path) ||
-                    isStaticInit(path)) {
+                    isInitBlock(path)) {
                 return path;
             }
             path = path.getParentPath();
@@ -30,7 +39,7 @@ public class CommonScanner extends TreePathScanner<Void, Void> {
     // classes
 
     public static TreePath findEnclosingClass(TreePath path) {
-        while (path.getLeaf().getKind() != Tree.Kind.CLASS) {
+        while (!hasClassKind(path.getLeaf())) {
             path = path.getParentPath();
             if (path == null) {
                 return null;
@@ -56,7 +65,7 @@ public class CommonScanner extends TreePathScanner<Void, Void> {
     public static boolean isFieldInit(TreePath path) {
         return path.getLeaf().getKind() == Tree.Kind.VARIABLE
                 && path.getParentPath() != null
-                && path.getParentPath().getLeaf().getKind() == Tree.Kind.CLASS;
+                && hasClassKind(path.getParentPath().getLeaf());
     }
 
     public static TreePath findEnclosingFieldInit(TreePath path) {
@@ -69,12 +78,32 @@ public class CommonScanner extends TreePathScanner<Void, Void> {
         return path;
     }
 
-    // Static Initializers
+    // initializer blocks
+
+    public static boolean isInitBlock(TreePath path, boolean isStatic) {
+      return isInitBlock(path)
+              && ((BlockTree) path.getLeaf()).isStatic() == isStatic;
+    }
+
+    public static boolean isInitBlock(TreePath path) {
+        return path.getParentPath() != null
+                && hasClassKind(path.getParentPath().getLeaf())
+                && path.getLeaf().getKind() == Tree.Kind.BLOCK;
+    }
+
+    public static TreePath findEnclosingInitBlock(TreePath path,
+            boolean isStatic) {
+        while (!isInitBlock(path, isStatic)) {
+            path = path.getParentPath();
+            if (path == null) {
+                return null;
+            }
+        }
+        return path;
+    }
 
     public static boolean isStaticInit(TreePath path) {
-        return path.getParentPath() != null
-                && path.getParentPath().getLeaf().getKind() == Tree.Kind.CLASS
-                && path.getLeaf().getKind() == Tree.Kind.BLOCK;
+        return isInitBlock(path, true);
     }
 
     public static TreePath findEnclosingStaticInit(TreePath path) {
@@ -87,8 +116,22 @@ public class CommonScanner extends TreePathScanner<Void, Void> {
         return path;
     }
 
-    // Don't scan into any classes so that occurrences in nested classes aren't
-    // counted.
+    public static boolean isInstanceInit(TreePath path) {
+        return isInitBlock(path, false);
+    }
+
+    public static TreePath findEnclosingInstanceInit(TreePath path) {
+        while (!isInstanceInit(path)) {
+            path = path.getParentPath();
+            if (path == null) {
+                return null;
+            }
+        }
+        return path;
+    }
+
+    // Don't scan into any classes so that occurrences in nested classes
+    // aren't counted.
     @Override
     public Void visitClass(ClassTree node, Void p) {
         return p;

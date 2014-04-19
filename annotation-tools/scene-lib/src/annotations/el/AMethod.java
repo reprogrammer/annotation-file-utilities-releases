@@ -1,8 +1,8 @@
 package annotations.el;
 
 /*>>>
-import checkers.nullness.quals.Nullable;
-import checkers.javari.quals.ReadOnly;
+import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.javari.qual.ReadOnly;
 */
 
 import java.util.Map;
@@ -12,7 +12,7 @@ import annotations.util.coll.VivifyingMap;
 /**
  * An annotated method; contains bounds, return, parameters, receiver, and throws.
  */
-public final class AMethod extends ABlock {
+public final class AMethod extends ADeclaration {
     /** The method's annotated type parameter bounds */
     public final VivifyingMap<BoundLocation, ATypeElement> bounds =
             ATypeElement.<BoundLocation>newVivifyingLHMap_ATE();
@@ -21,22 +21,24 @@ public final class AMethod extends ABlock {
     public final ATypeElement returnType; // initialized in constructor
 
     /** The method's annotated receiver parameter type */
-    public final ATypeElement receiver; // initialized in constructor
+    public final AField receiver; // initialized in constructor
 
     /** The method's annotated parameters; map key is parameter index */
-    public final VivifyingMap<Integer, AElement> parameters =
-            AElement.<Integer>newVivifyingLHMap_AET();
+    public final VivifyingMap<Integer, AField> parameters =
+            AField.<Integer>newVivifyingLHMap_AF();
 
     public final VivifyingMap<TypeIndexLocation, ATypeElement> throwsException =
         ATypeElement.<TypeIndexLocation>newVivifyingLHMap_ATE();
 
+    public ABlock body;
     private final String methodName;
 
     AMethod(String methodName) {
       super("method: " + methodName);
       this.methodName = methodName;
+      this.body = new ABlock(methodName);
       returnType = new ATypeElement("return type of " + methodName);
-      receiver = new ATypeElement("receiver parameter type of " + methodName);
+      receiver = new AField("receiver parameter type of " + methodName);
     }
 
     /**
@@ -52,12 +54,12 @@ public final class AMethod extends ABlock {
         parameters.prune();
         o.parameters.prune();
 
-        return tlAnnotationsHere.equals(o.tlAnnotationsHere)
+        return super.equals(o)
             && returnType.equalsTypeElement(o.returnType)
             && bounds.equals(o.bounds)
             && receiver.equals(o.receiver)
             && parameters.equals(o.parameters)
-            && equalsBlock(o)
+            && body.equals(o.body)
             && throwsException.equals(o.throwsException);
     }
 
@@ -68,7 +70,7 @@ public final class AMethod extends ABlock {
     public int hashCode(/*>>> @ReadOnly AMethod this*/) {
         return super.hashCode() + bounds.hashCode()
                 + receiver.hashCode() + parameters.hashCode()
-                + throwsException.hashCode();
+                + throwsException.hashCode() + body.hashCode();
     }
 
     /**
@@ -79,7 +81,7 @@ public final class AMethod extends ABlock {
         return super.prune() & bounds.prune()
             & returnType.prune()
             & receiver.prune() & parameters.prune()
-            & throwsException.prune();
+            & throwsException.prune() & body.prune();
     }
 
     @Override
@@ -91,7 +93,7 @@ public final class AMethod extends ABlock {
         sb.append(" -1:");
         sb.append(receiver.toString());
         // int size = parameters.size();
-        for (Map.Entry<Integer, AElement> em : parameters.entrySet()) {
+        for (Map.Entry<Integer, AField> em : parameters.entrySet()) {
             Integer i = em.getKey();
             sb.append(" ");
             sb.append(i);
@@ -106,7 +108,12 @@ public final class AMethod extends ABlock {
         sb.append("ret:");
         sb.append(returnType.toString());
         sb.append(") ");
-        sb.append(super.toString());
+        sb.append(body.toString());
         return sb.toString();
+    }
+
+    @Override
+    public <R, T> R accept(ElementVisitor<R, T> v, T t) {
+        return v.visitMethod(this, t);
     }
 }

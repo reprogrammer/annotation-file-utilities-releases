@@ -1,8 +1,8 @@
 package annotations.field;
 
 /*>>>
-import checkers.nullness.quals.*;
-import checkers.javari.quals.*;
+import org.checkerframework.checker.nullness.qual.*;
+import org.checkerframework.checker.javari.qual.*;
 */
 
 import java.util.HashMap;
@@ -97,4 +97,8 @@ public final /*@ReadOnly*/ class BasicAFT extends ScalarAFT {
         }
     }
 
+    @Override
+    public <R, T> R accept(AFTVisitor<R, T> v, T arg) {
+        return v.visitBasicAFT(this, arg);
+    }
 }

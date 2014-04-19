@@ -1,8 +1,8 @@
 package annotations.io;
 
 /*>>>
-import checkers.nullness.quals.*;
-import checkers.javari.quals.*;
+import org.checkerframework.checker.nullness.qual.*;
+import org.checkerframework.checker.javari.qual.*;
 */
 
 import static java.io.StreamTokenizer.TT_EOF;
@@ -39,8 +39,10 @@ import annotations.Annotations;
 import annotations.ArrayBuilder;
 import annotations.el.ABlock;
 import annotations.el.AClass;
+import annotations.el.ADeclaration;
 import annotations.el.AElement;
 import annotations.el.AExpression;
+import annotations.el.AField;
 import annotations.el.AMethod;
 import annotations.el.AScene;
 import annotations.el.ATypeElement;
@@ -714,7 +716,7 @@ public final class IndexFileParser {
             ParseException {
         expectKeyword("field");
         String name = expectIdentifier();
-        AElement f = c.fields.vivify(name);
+        AField f = c.fields.vivify(name);
 
         expectChar(':');
         parseAnnotations(f);
@@ -726,6 +728,7 @@ public final class IndexFileParser {
 
         AExpression fieldinit = c.fieldInits.vivify(name);
         parseExpression(fieldinit);
+        parseASTInsertions(f);
     }
 
     private void parseStaticInit(AClass c) throws IOException,
@@ -737,6 +740,17 @@ public final class IndexFileParser {
 
         ABlock staticinit = c.staticInits.vivify(blockIndex);
         parseBlock(staticinit);
+    }
+
+    private void parseInstanceInit(AClass c) throws IOException,
+            ParseException {
+        expectKeyword("instanceinit");
+        expectChar('*');
+        int blockIndex = expectNonNegative(matchNNInteger());
+        expectChar(':');
+
+        ABlock instanceinit = c.instanceInits.vivify(blockIndex);
+        parseBlock(instanceinit);
     }
 
     private void parseMethod(AClass c) throws IOException,
@@ -786,7 +800,7 @@ public final class IndexFileParser {
                     matchChar('#');
                 }
                 int idx = expectNonNegative(matchNNInteger());
-                AElement p = m.parameters.vivify(idx);
+                AField p = m.parameters.vivify(idx);
                 expectChar(':');
                 parseAnnotations(p);
                 if (checkKeyword("type") && matchKeyword("type")) {
@@ -796,14 +810,15 @@ public final class IndexFileParser {
                 }
             } else if (matchKeyword("receiver")) {
                 expectChar(':');
-                parseAnnotations(m.receiver);
-                parseInnerTypes(m.receiver);
+                parseAnnotations(m.receiver.type);
+                parseInnerTypes(m.receiver.type);
             } else {
                 throw new Error("This can't happen");
             }
         }
 
-        parseBlock(m);
+        parseBlock(m.body);
+        parseASTInsertions(m);
     }
 
     private void parseBlock(ABlock bl) throws IOException,
@@ -838,7 +853,7 @@ public final class IndexFileParser {
                     }
                     loc = new LocalLocation(lvar, varIndex);
                 }
-                AElement l = bl.locals.vivify(loc);
+                AField l = bl.locals.vivify(loc);
                 expectChar(':');
                 parseAnnotations(l);
                 if (checkKeyword("type") && matchKeyword("type")) {
@@ -926,45 +941,57 @@ public final class IndexFileParser {
                 parseAnnotations(n);
                 parseInnerTypes(n);
             }
-            while (checkKeyword("insert-annotation")) {
-                matchKeyword("insert-annotation");
-                matched = true;
-                evermatched = true;
-                ASTPath astPath = parseASTPath();
-                expectChar(':');
-                // if path doesn't indicate a type, a cast must be generated
-                if (selectsType(astPath)) {
-                    ATypeElement i = exp.insertAnnotations.vivify(astPath);
-                    parseAnnotations(i);
-                    parseInnerTypes(i);
-                } else {
-                    ATypeElementWithType i = exp.insertTypecasts.vivify(astPath);
-                    parseAnnotations(i);
-                    i.setType(new DeclaredType());
-                    parseInnerTypes(i);
-                }  // TODO: refactor
-            }
-            while (checkKeyword("insert-typecast")) {
-                matchKeyword("insert-typecast");
-                matched = true;
-                evermatched = true;
-                ASTPath astPath = parseASTPath();
-                expectChar(':');
-                ATypeElementWithType i = exp.insertTypecasts.vivify(astPath);
-                parseAnnotations(i);
-                Type type = parseType();
-                i.setType(type);
-                parseInnerTypes(i);
-            }
         }
         return evermatched;
     }
 
-    private static boolean selectsType(ASTPath astPath) {
-      int n = astPath.size();
-      return n > 0 && Arrays.<String>binarySearch(typeSelectors,
-              astPath.get(n-1).getChildSelector(),
-              Collator.getInstance()) >= 0;
+    private static boolean isTypeSelector(String selector) {
+      return Arrays.<String>binarySearch(typeSelectors, selector, Collator.getInstance()) >= 0;
+    }
+
+    private static boolean selectsExpression(ASTPath astPath) {
+        int n = astPath.size();
+        if (n > 0) {
+            String selector = astPath.get(n-1).getChildSelector();
+            if (!isTypeSelector(selector)) { return true; }
+        }
+        return false;
+    }
+
+    private boolean parseASTInsertions(ADeclaration decl)
+            //(VivifyingMap<ASTPath, ? extends AElement> insertAnnotations,
+            //VivifyingMap<ASTPath, ATypeElementWithType> insertTypecasts)
+                      throws IOException, ParseException {
+        boolean matched = false;
+        while (checkKeyword("insert-annotation")) {
+            matched = true;
+            matchKeyword("insert-annotation");
+            ASTPath astPath = parseASTPath();
+            expectChar(':');
+            // if path doesn't indicate a type, a cast must be generated
+            if (selectsExpression(astPath)) {
+                ATypeElementWithType i = decl.insertTypecasts.vivify(astPath);
+                parseAnnotations(i);
+                i.setType(new DeclaredType());
+                parseInnerTypes(i);
+            } else {
+                ATypeElement i = decl.insertAnnotations.vivify(astPath);
+                parseAnnotations(i);
+                parseInnerTypes(i);
+            }
+        }
+        while (checkKeyword("insert-typecast")) {
+            matched = true;
+            matchKeyword("insert-typecast");
+            ASTPath astPath = parseASTPath();
+            expectChar(':');
+            ATypeElementWithType i = decl.insertTypecasts.vivify(astPath);
+            parseAnnotations(i);
+            Type type = parseType();
+            i.setType(type);
+            parseInnerTypes(i);
+        }
+        return matched;
     }
 
     /**
@@ -1222,11 +1249,14 @@ public final class IndexFileParser {
             parseExtends(c);
         while (checkKeyword("implements"))
             parseImplements(c);
+        parseASTInsertions(c);
 
         while (checkKeyword("field"))
             parseField(c);
         while (checkKeyword("staticinit"))
             parseStaticInit(c);
+        while (checkKeyword("instanceinit"))
+            parseInstanceInit(c);
         while (checkKeyword("method"))
             parseMethod(c);
         c.methods.prune();

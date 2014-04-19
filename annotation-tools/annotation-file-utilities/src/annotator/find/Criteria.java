@@ -139,6 +139,31 @@ public final class Criteria {
   }
 
   /**
+   * Determines whether this is the criteria on the RHS of an occurrence
+   * of 'instanceof'.
+   */
+  public boolean isOnInstanceof() {
+    for (Criterion c : criteria) {
+      if (c.getKind() == Criterion.Kind.INSTANCE_OF) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Determines whether this is the criteria on an object initializer.
+   */
+  public boolean isOnNew() {
+    for (Criterion c : criteria) {
+      if (c.getKind() == Criterion.Kind.NEW) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
    * Returns true if this Criteria is on the given method.
    */
   public boolean isOnMethod(String methodname) {
@@ -324,7 +349,11 @@ public final class Criteria {
   }
 
   public final static Criterion inStaticInit(int blockID) {
-    return new InStaticInitCriterion(blockID);
+    return new InInitBlockCriterion(blockID, true);
+  }
+
+  public final static Criterion inInstanceInit(int blockID) {
+    return new InInitBlockCriterion(blockID, false);
   }
 
   public final static Criterion inFieldInit(String varName) {
@@ -335,8 +364,8 @@ public final class Criteria {
     return new ReceiverCriterion(methodName);
   }
 
-  public final static Criterion returnType(String methodName) {
-    return new ReturnTypeCriterion(methodName);
+  public final static Criterion returnType(String className, String methodName) {
+    return new ReturnTypeCriterion(className, methodName);
   }
 
   public final static Criterion isSigMethod(String methodName) {

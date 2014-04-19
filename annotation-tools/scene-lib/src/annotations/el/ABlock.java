@@ -1,7 +1,7 @@
 package annotations.el;
 
 /*>>>
-import checkers.javari.quals.ReadOnly;
+import org.checkerframework.checker.javari.qual.ReadOnly;
 */
 
 import java.util.Map;
@@ -17,8 +17,8 @@ public class ABlock extends AExpression {
     // Currently we don't validate the local locations (e.g., that no two
     // distinct ranges for the same index overlap).
     /** The method's annotated local variables; map key contains local variable location numbers */
-    public final VivifyingMap<LocalLocation, AElement> locals =
-            AElement.<LocalLocation>newVivifyingLHMap_AET();
+    public final VivifyingMap<LocalLocation, AField> locals =
+            AField.<LocalLocation>newVivifyingLHMap_AF();
 
     ABlock(Object id) {
         super(id);
@@ -33,8 +33,10 @@ public class ABlock extends AExpression {
             ((/*@ReadOnly*/ ABlock) o).equalsBlock(this);
     }
 
-    protected boolean equalsBlock(/*>>> @ReadOnly ABlock this,*/ /*@ReadOnly*/ ABlock o) {
-        return locals.equals(o.locals) && super.equalsExpression(o);
+    protected boolean equalsBlock(/*>>> @ReadOnly ABlock this,*/
+            /*@ReadOnly*/ ABlock o) {
+        return super.equalsExpression(o)
+                && o.locals.equals(locals);
     }
 
     /**
@@ -58,7 +60,7 @@ public class ABlock extends AExpression {
         StringBuilder sb = new StringBuilder();
         // sb.append("ABlock ");
         // sb.append(id);
-        for (Map.Entry<LocalLocation, AElement> em : locals.entrySet()) {
+        for (Map.Entry<LocalLocation, AField> em : locals.entrySet()) {
             LocalLocation loc = em.getKey();
             sb.append(loc);
             sb.append(": ");
@@ -68,5 +70,10 @@ public class ABlock extends AExpression {
         }
         sb.append(super.toString());
         return sb.toString();
+    }
+
+    @Override
+    public <R, T> R accept(ElementVisitor<R, T> v, T t) {
+        return v.visitBlock(this, t);
     }
 }

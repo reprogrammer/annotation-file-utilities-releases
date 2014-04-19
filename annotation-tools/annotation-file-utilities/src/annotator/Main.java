@@ -23,6 +23,8 @@ import plume.UtilMDE;
 import annotator.Source.CompilerException;
 import annotator.find.Criteria;
 import annotator.find.Insertion;
+import annotator.find.Insertions;
+import annotator.find.NewInsertion;
 import annotator.find.ReceiverInsertion;
 import annotator.find.TreeFinder;
 import annotator.specification.IndexFileSpecification;
@@ -30,6 +32,7 @@ import annotator.specification.Specification;
 
 import com.google.common.collect.SetMultimap;
 import com.sun.source.tree.CompilationUnitTree;
+import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.util.TreePath;
 import com.sun.tools.javac.main.CommandLine;
@@ -121,8 +124,22 @@ public class Main {
                         annotations.io.classfile.ClassFileReader.INDEX_UTILS_VERSION);
     }
 
-    Options options = new Options("Main [options] ann-file... java-file...", Main.class);
-    String[] file_args = options.parse_or_usage(CommandLine.parse(args));
+    Options options = new Options(
+        "Main [options] { ann-file | java-file | @arg-file } ...\n"
+            + "(Contents of argfiles are expanded into the argument list.)",
+        Main.class);
+    String[] file_args;
+    try {
+      String[] cl_args = CommandLine.parse(args);
+      file_args = options.parse_or_usage(cl_args);
+    } catch (IOException ex) {
+      System.err.println(ex);
+      System.err.println("(For non-argfile beginning with \"@\", use \"@@\" for initial \"@\".");
+      System.err.println("Alternative for filenames: indicate directory, e.g. as './@file'.");
+      System.err.println("Alternative for flags: use '=', as in '-o=@Deprecated'.)");
+      file_args = null;  // Eclipse compiler issue workaround
+      System.exit(1);
+    }
 
     if (debug) {
       TreeFinder.debug = true;
@@ -145,7 +162,7 @@ public class Main {
     }
 
     // The insertions specified by the annotation files.
-    List<Insertion> insertions = new ArrayList<Insertion>();
+    Insertions insertions = new Insertions();
     // The Java files into which to insert.
     List<String> javafiles = new ArrayList<String>();
 
@@ -223,8 +240,6 @@ public class Main {
       }
 
       File javafile = new File(javafilename);
-
-      File outfile;
       File unannotated = new File(javafilename + ".unannotated");
       if (in_place) {
         // It doesn't make sense to check timestamps;
@@ -241,19 +256,11 @@ public class Main {
                                           unannotated, javafile));
           }
         }
-        outfile = javafile;
-      } else {
-        String baseName;
-        if (javafile.isAbsolute()) {
-          baseName = javafile.getName();
-        } else {
-          baseName = javafile.getPath();
-        }
-        outfile = new File(outdir, baseName);
       }
 
       Set<String> imports = new LinkedHashSet<String>();
 
+      String fileSep = System.getProperty("file.separator");
       String fileLineSep = System.getProperty("line.separator");
       Source src;
       // Get the source file, and use it to obtain parse trees.
@@ -273,9 +280,12 @@ public class Main {
       }
 
       int num_insertions = 0;
+      String pkg = "";
 
       for (CompilationUnitTree cut : src.parse()) {
         JCTree.JCCompilationUnit tree = (JCTree.JCCompilationUnit) cut;
+        ExpressionTree pkgExp = cut.getPackageName();
+        pkg = pkgExp == null ? "" : pkgExp.toString();
 
         // Create a finder, and use it to get positions.
         TreeFinder finder = new TreeFinder(tree);
@@ -300,6 +310,7 @@ public class Main {
         positionKeysSorted.addAll(positionKeysUnsorted);
         for (Integer pos : positionKeysSorted) {
           boolean receiverInserted = false;
+          boolean newInserted = false;
           List<Insertion> toInsertList = new ArrayList<Insertion>(positions.get(pos));
           Collections.reverse(toInsertList);
           if (debug) {
@@ -343,6 +354,10 @@ public class Main {
               ReceiverInsertion ri = (ReceiverInsertion) iToInsert;
               ri.setAnnotationsOnly(receiverInserted);
               receiverInserted = true;
+            } else if (iToInsert.getKind() == Insertion.Kind.NEW) {
+              NewInsertion ni = (NewInsertion) iToInsert;
+              ni.setAnnotationsOnly(newInserted);
+              newInserted = true;
             }
 
             String toInsert = iToInsert.getText(comments, abbreviate,
@@ -374,6 +389,10 @@ public class Main {
               }
             }
 
+            // TODO: Neither the above hack nor this check should be
+            // necessary.  Find out why re-insertions still occur and
+            // fix properly.
+            if (iToInsert.getInserted()) { continue; }
             src.insert(pos, toInsert);
             if (verbose) {
               System.out.print(".");
@@ -427,8 +446,10 @@ public class Main {
       }
 
       // Write the source file.
+      File outfile = null;
       try {
         if (in_place) {
+          outfile = javafile;
           if (verbose) {
             System.out.printf("Renaming %s to %s%n", javafile, unannotated);
           }
@@ -438,6 +459,16 @@ public class Main {
                                           javafile, unannotated));
           }
         } else {
+          if (pkg.isEmpty()) {
+            outfile = new File(outdir, javafile.getName());
+          } else {
+            String[] pkgPath = pkg.split("\\.");
+            StringBuilder sb = new StringBuilder(outdir);
+            for (int i = 0 ; i < pkgPath.length ; i++) {
+              sb.append(fileSep).append(pkgPath[i]);
+            }
+            outfile = new File(sb.toString(), javafile.getName());
+          }
           outfile.getParentFile().mkdirs();
         }
         OutputStream output = new FileOutputStream(outfile);

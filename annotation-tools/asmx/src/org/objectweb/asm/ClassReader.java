@@ -123,6 +123,7 @@ public class ClassReader {
                 case ClassWriter.INT:
                 case ClassWriter.FLOAT:
                 case ClassWriter.NAME_TYPE:
+                case ClassWriter.INDY:
                     size = 5;
                     break;
                 case ClassWriter.LONG:
@@ -135,6 +136,9 @@ public class ClassReader {
                     if (size > max) {
                         max = size;
                     }
+                    break;
+                case ClassWriter.HANDLE:
+                    size = 4;
                     break;
                 // case ClassWriter.CLASS:
                 // case ClassWriter.STR:
@@ -1344,6 +1348,7 @@ public class ClassReader {
         Integer param_index = null;
         Integer bound_index = null;
         Integer type_index = null;
+        Integer exception_index = null;
         Integer table_length = null;
 
         TargetType target_type = TargetType.fromTargetTypeValue(target_type_value);
@@ -1439,6 +1444,10 @@ public class ClassReader {
           type_index = readUnsignedShort(v);
           v += 2;
           break;
+        case EXCEPTION_PARAMETER:
+          exception_index = readUnsignedShort(v);
+          v += 2;
+          break;
 
         // typecast
         // type argument in constructor call
@@ -1512,6 +1521,9 @@ public class ClassReader {
         }
         if (bound_index != null) {
             xav.visitXBoundIndex(bound_index);
+        }
+        if (exception_index != null) {
+            xav.visitXExceptionIndex(exception_index);
         }
         if (location_length != null) {
             xav.visitXLocationLength(location_length);

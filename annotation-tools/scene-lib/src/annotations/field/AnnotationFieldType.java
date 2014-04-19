@@ -1,8 +1,8 @@
 package annotations.field;
 
 /*>>>
-import checkers.nullness.quals.*;
-import checkers.javari.quals.*;
+import org.checkerframework.checker.nullness.qual.*;
+import org.checkerframework.checker.javari.qual.*;
 */
 
 import annotations.el.AnnotationDef;
@@ -87,4 +87,6 @@ public abstract /*@ReadOnly*/ class AnnotationFieldType extends EqualByStringRep
         } else
             return null;
     }
+
+    public abstract <R, T> R accept(AFTVisitor<R, T> v, T arg);
 }

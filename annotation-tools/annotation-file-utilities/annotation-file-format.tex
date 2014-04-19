@@ -269,6 +269,8 @@ class names for a class is to compile the class and look at the filenames of the
 \qquad        \bnfnt{extends}* \\
 \qquad        \bnfnt{implements}* \\
 \qquad        \bnfnt{field-definition}*  \\
+\qquad        \bnfnt{staticinit}* \\
+\qquad        \bnfnt{instanceinit}* \\
 \qquad        \bnfnt{method-definition}*
 \end{tabbing}
 
@@ -337,6 +339,25 @@ define annotations on the names of classes a class \code{extends} or
 \bnfnt{implements} ::= \\
 \qquad    \bnfcmt The integer is the zero-based index of the implemented interface. \\
 \qquad    \bnflit{implements} \bnfnt{integer} \bnflit{:} \bnfnt{type-annotation}* \lineend  \\
+\qquad        \bnfnt{compound-type}*
+\end{tabbing}
+
+
+\paragraph{Static and instance initializers}
+
+The \bnfnt{staticinit} and \bnfnt{instanceinit} productions
+define annotations on code within static or instance initializer blocks.
+
+\begin{tabbing}
+\qquad \= \kill
+\bnfnt{staticinit} ::= \\
+\qquad    \bnfcmt The integer is the zero-based index of the implemented interface. \\
+\qquad    \bnflit{staticinit} \bnflit{*} \bnfnt{integer} \bnflit{:} \lineend  \\
+\qquad        \bnfnt{compound-type}*
+\\
+\bnfnt{instanceinit} ::= \\
+\qquad    \bnfcmt The integer is the zero-based index of the implemented interface. \\
+\qquad    \bnflit{instanceinit} \bnflit{*} \bnfnt{integer} \bnflit{:} \lineend  \\
 \qquad        \bnfnt{compound-type}*
 \end{tabbing}
 
@@ -481,7 +502,7 @@ expression:
 \qquad    \bnfnt{typecast}* \\
 \qquad    \bnfnt{instanceof}* \\
 \qquad    \bnfnt{new}* \\
-\qquad    \bnfnt{source-insert-typecast}*
+\qquad    \bnfnt{source-insert-typecast}* \\
 \qquad    \bnfnt{source-insert-annotation}*
 \end{tabbing}
 
@@ -618,7 +639,9 @@ The grammar uses \bnflit{\#} for bytecode offsets and \bnflit{*} for source code
 
 A path through the AST (abstract
 syntax tree) specifies an arbitrary expression in source code to modify.
-Currently, AST paths can only be used to specify a location to insert a cast.
+AST paths can be used in the \code{.jaif} file to specify a location to
+insert either a bare annotation (\bnflit{insert-annotation}) or a cast
+(\bnflit{insert-typecast}).
 
 For a cast insertion, the \code{.jaif} file specifies the type to cast to.
 The annotations on the \bnflit{insert-typecast} line will be inserted on
@@ -765,7 +788,7 @@ The Checker Framework has a processor to do this. The following command will
 output indented AST nodes for the entire input program.
 
 \begin{verbatim}
-javac -processor checkers.util.debug.TreeDebug ASTPathExample.java
+javac -processor org.checkerframework.common.util.debug.TreeDebug ASTPathExample.java
 \end{verbatim}
 
 The following is the grammar for AST paths.
@@ -777,6 +800,7 @@ The following is the grammar for AST paths.
 \\
 \bnfnt{ast-entry} ::= \\
 \qquad    \bnfnt{annotated-type} \\
+\qquad    \bnfor{} \bnfnt{annotation} \\
 \qquad    \bnfor{} \bnfnt{array-access} \\
 \qquad    \bnfor{} \bnfnt{array-type} \\
 \qquad    \bnfor{} \bnfnt{assert} \\
@@ -784,6 +808,7 @@ The following is the grammar for AST paths.
 \qquad    \bnfor{} \bnfnt{binary} \\
 \qquad    \bnfor{} \bnfnt{block} \\
 \qquad    \bnfor{} \bnfnt{case} \\
+\qquad    \bnfor{} \bnfnt{class-declaration} \\
 \qquad    \bnfor{} \bnfnt{catch} \\
 \qquad    \bnfor{} \bnfnt{compound-assignment} \\
 \qquad    \bnfor{} \bnfnt{conditional-expression} \\
@@ -793,10 +818,12 @@ The following is the grammar for AST paths.
 \qquad    \bnfor{} \bnfnt{for-loop} \\
 \qquad    \bnfor{} \bnfnt{if} \\
 \qquad    \bnfor{} \bnfnt{instance-of} \\
+\qquad    \bnfor{} \bnfnt{intersection-type} \\
 \qquad    \bnfor{} \bnfnt{labeled-statement} \\
 \qquad    \bnfor{} \bnfnt{lambda-expression} \\
 \qquad    \bnfor{} \bnfnt{member-reference} \\
 \qquad    \bnfor{} \bnfnt{member-select} \\
+\qquad    \bnfor{} \bnfnt{method-declaration} \\
 \qquad    \bnfor{} \bnfnt{method-invocation} \\
 \qquad    \bnfor{} \bnfnt{new-array} \\
 \qquad    \bnfor{} \bnfnt{new-class} \\
@@ -808,6 +835,7 @@ The following is the grammar for AST paths.
 \qquad    \bnfor{} \bnfnt{throw} \\
 \qquad    \bnfor{} \bnfnt{try} \\
 \qquad    \bnfor{} \bnfnt{type-cast} \\
+\qquad    \bnfor{} \bnfnt{type-parameter} \\
 \qquad    \bnfor{} \bnfnt{unary} \\
 \qquad    \bnfor{} \bnfnt{union-type} \\
 \qquad    \bnfor{} \bnfnt{variable-type} \\
@@ -816,6 +844,9 @@ The following is the grammar for AST paths.
 \\
 \bnfnt{annotated-type} :: = \\
 \qquad    \bnflit{AnnotatedType} \bnflit{.} ( ( \bnflit{annotation} \bnfnt{integer} ) \bnfor{} \bnflit{underlyingType} ) \\
+\\
+\bnfnt{annotation} ::= \\
+\qquad    \bnflit{Annotation} \bnflit{.} ( \bnflit{type} \bnfor{} ( \bnflit{argument} \bnfnt{integer} ) ) \\
 \\
 \bnfnt{array-access} ::= \\
 \qquad    \bnflit{ArrayAccess} \bnflit{.} ( \bnflit{expression} \bnfor{} \bnflit{index} ) \\
@@ -841,6 +872,9 @@ The following is the grammar for AST paths.
 \bnfnt{catch} ::= \\
 \qquad    \bnflit{Catch} \bnflit{.} ( \bnflit{parameter} \bnfor{} \bnflit{block} ) \\
 \\
+\bnfnt{class-declaration} ::= \\
+\qquad    \bnflit{Class} \bnflit{.} ( ( \bnflit{bound} \bnfnt{integer} ) \bnfor{} ( \bnflit{typeParameter} \bnfnt{integer} ) ) \\
+\\
 \bnfnt{compound-assignment} ::= \\
 \qquad    \bnflit{CompoundAssignment} \bnflit{.} ( \bnflit{variable} \bnfor{} \bnflit{expression} ) \\
 \\
@@ -865,6 +899,9 @@ The following is the grammar for AST paths.
 \bnfnt{instance-of} ::= \\
 \qquad    \bnflit{InstanceOf} \bnflit{.} ( \bnflit{expression} \bnfor{} \bnflit{type} ) \\
 \\
+\bnfnt{intersection-type} ::= \\
+\qquad    \bnflit{IntersectionType} \bnflit{.} \bnflit{bound} \bnfnt{integer} \\
+\\
 \bnfnt{labeled-statement} ::= \\
 \qquad    \bnflit{LabeledStatement} \bnflit{.} \bnflit{statement} \\
 \\
@@ -876,6 +913,9 @@ The following is the grammar for AST paths.
 \\
 \bnfnt{member-select} ::= \\
 \qquad    \bnflit{MemberSelect} \bnflit{.} \bnflit{expression} \\
+\\
+\bnfnt{method-declaration} ::= \\
+\qquad    \bnflit{Method} \bnflit{.} ( \bnflit{body} \bnfor{} ( \bnflit{parameter} \bnfnt{integer} ) \bnfor{} \bnflit{type} \bnfor{} ( \bnflit{typeParameter} \bnfnt{integer} ) ) \\
 \\
 \bnfnt{method-invocation} ::= \\
 \qquad    \bnflit{MethodInvocation} \bnflit{.} ( ( \bnflit{typeArgument} \bnfnt{integer} ) \bnfor{} \bnflit{methodSelect} \\
@@ -911,6 +951,9 @@ The following is the grammar for AST paths.
 \\
 \bnfnt{type-cast} ::= \\
 \qquad    \bnflit{TypeCast} \bnflit{.} ( \bnflit{type} \bnfor{} \bnflit{expression} ) \\
+\\
+\bnfnt{type-parameter} ::= \\
+\qquad    \bnflit{TypeParameter} \bnflit{.} \bnflit{bound} \bnfnt{integer} \\
 \\
 \bnfnt{unary} ::= \\
 \qquad    \bnflit{Unary} \bnflit{.} \bnflit{expression} \\
